@@ -12,6 +12,7 @@ interface FlowArrowProps {
   length?: "sm" | "md" | "lg" | "xl";
   dashed?: boolean;
   onClick?: () => void;
+  labelPosition?: "right" | "left";
 }
 
 const COLOR_MAP: Record<ArrowColor, {
@@ -90,41 +91,48 @@ export function HorizontalFlowArrow({
   onClick
 }: FlowArrowProps) {
   const c = COLOR_MAP[color];
-  const markerId = `h-arrow-${color}-${Math.random().toString(36).substr(2, 9)}`;
+  const reactId = React.useId();
+  const markerId = `h-arrow-${color}-${reactId.replace(/[^a-zA-Z0-9_-]/g, "")}`;
 
-  const widthClasses = {
-    sm: "w-8 sm:w-10 min-w-[32px]",
-    md: "w-12 sm:w-16 min-w-[48px]",
-    lg: "w-18 sm:w-24 min-w-[72px]",
-    xl: "w-28 sm:w-36 min-w-[110px]"
+  // Estimate required width so that label badge NEVER spills out and overlaps adjacent process cards
+  const labelLength = Math.max(label ? label.length : 0, sublabel ? sublabel.length * 0.85 : 0);
+  const requiredLabelWidth = labelLength > 0 ? Math.ceil(labelLength * 8) + 36 : 0;
+
+  const baseWidth = {
+    sm: 48,
+    md: 76,
+    lg: 104,
+    xl: 140
   }[length];
 
-  const svgWidth = { sm: 40, md: 60, lg: 90, xl: 130 }[length];
+  const effectiveWidth = Math.max(baseWidth, requiredLabelWidth);
 
   return (
     <div
       onClick={onClick}
-      className={`flex flex-col items-center justify-center shrink-0 relative select-none py-1 group ${
+      style={{ width: `${effectiveWidth}px`, minWidth: `${effectiveWidth}px` }}
+      className={`flex flex-col items-center justify-center shrink-0 relative select-none py-1 group px-1 ${
         onClick ? "cursor-pointer" : ""
-      } ${widthClasses} ${className}`}
+      } ${className}`}
       title={label ? `Process Flow: ${label}` : "Process Flow"}
     >
-      {/* Step Transition Label Badge */}
+      {/* Step Transition Label Badge - comfortably contained inside effectiveWidth */}
       {label && (
         <div
-          className={`px-2 py-0.5 rounded-md text-[8.5px] font-black uppercase tracking-wider whitespace-nowrap shadow-xs border transition-all duration-300 z-10 ${
+          className={`px-2.5 py-0.5 rounded-md text-[8.5px] font-black uppercase tracking-wider whitespace-nowrap shadow-xs border transition-all duration-300 z-10 ${
             c.badge
-          } group-hover:scale-105 group-hover:shadow-md mb-0.5`}
+          } group-hover:scale-105 group-hover:shadow-md mb-1`}
         >
           {label}
         </div>
       )}
 
-      {/* SVG Arrow Line with Arrowhead and Moving Pulse */}
-      <div className="w-full h-6 flex items-center justify-center relative my-0.5">
+      {/* SVG Arrow Line with Arrowhead and Moving Pulse spanning full width */}
+      <div className="w-full h-5 flex items-center justify-center relative my-0.5">
         <svg
-          viewBox={`0 0 ${svgWidth} 16`}
-          className={`w-full h-4 overflow-visible transition-all duration-300 ${c.glow}`}
+          viewBox={`0 0 ${effectiveWidth} 16`}
+          style={{ width: `${effectiveWidth}px` }}
+          className={`h-4 overflow-visible transition-all duration-300 ${c.glow}`}
         >
           <defs>
             <marker
@@ -141,9 +149,9 @@ export function HorizontalFlowArrow({
 
           {/* Main Connector Line */}
           <line
-            x1="2"
+            x1="4"
             y1="8"
-            x2={svgWidth - 7}
+            x2={effectiveWidth - 8}
             y2="8"
             stroke={c.stroke}
             strokeWidth="2.5"
@@ -157,8 +165,8 @@ export function HorizontalFlowArrow({
             <circle r="3" cy="8" fill={c.particle}>
               <animate
                 attributeName="cx"
-                from="4"
-                to={svgWidth - 10}
+                from="6"
+                to={effectiveWidth - 11}
                 dur="1.3s"
                 repeatCount="indefinite"
               />
@@ -167,9 +175,12 @@ export function HorizontalFlowArrow({
         </svg>
       </div>
 
-      {/* Optional Micro Sub-label */}
+      {/* Micro Sub-label below arrow line with safe width */}
       {sublabel && (
-        <span className="text-[7.5px] font-bold text-slate-500 uppercase tracking-tighter truncate max-w-[90px] leading-none text-center mt-0.5">
+        <span 
+          style={{ maxWidth: `${effectiveWidth - 4}px` }}
+          className="text-[7.5px] font-bold text-slate-500 uppercase tracking-tight truncate leading-none text-center mt-0.5 block"
+        >
           {sublabel}
         </span>
       )}
@@ -185,44 +196,54 @@ export function VerticalFlowArrow({
   length = "md",
   dashed = false,
   className = "",
-  onClick
+  onClick,
+  labelPosition = "right"
 }: FlowArrowProps) {
   const c = COLOR_MAP[color];
-  const markerId = `v-arrow-${color}-${Math.random().toString(36).substr(2, 9)}`;
+  const reactId = React.useId();
+  const markerId = `v-arrow-${color}-${reactId.replace(/[^a-zA-Z0-9_-]/g, "")}`;
 
-  const heightClasses = {
-    sm: "h-8 min-h-[32px]",
-    md: "h-12 min-h-[48px]",
-    lg: "h-18 min-h-[72px]",
-    xl: "h-24 min-h-[96px]"
+  const hasLabel = Boolean(label || sublabel);
+
+  const effectiveSvgHeight = {
+    sm: hasLabel ? 48 : 32,
+    md: hasLabel ? 64 : 48,
+    lg: hasLabel ? 84 : 72,
+    xl: hasLabel ? 108 : 96
   }[length];
 
-  const svgHeight = { sm: 32, md: 48, lg: 72, xl: 96 }[length];
+  const heightClasses = {
+    sm: hasLabel ? "h-12 min-h-[48px]" : "h-8 min-h-[32px]",
+    md: hasLabel ? "h-16 min-h-[64px]" : "h-12 min-h-[48px]",
+    lg: hasLabel ? "h-21 min-h-[84px]" : "h-18 min-h-[72px]",
+    xl: hasLabel ? "h-27 min-h-[108px]" : "h-24 min-h-[96px]"
+  }[length];
 
   return (
     <div
       onClick={onClick}
-      className={`flex items-center justify-center shrink-0 relative select-none px-1 group ${
+      className={`flex items-center justify-center shrink-0 relative select-none px-2 my-1 group ${
         onClick ? "cursor-pointer" : ""
       } ${heightClasses} ${className}`}
       title={label ? `Process Flow: ${label}` : "Process Flow"}
     >
-      <div className="flex flex-col items-center relative h-full justify-center">
+      <div className="relative flex items-center justify-center h-full">
         {/* SVG Arrow Line with Arrowhead and Moving Pulse */}
         <svg
-          viewBox={`0 0 16 ${svgHeight}`}
-          className={`h-full w-4 overflow-visible transition-all duration-300 ${c.glow}`}
+          viewBox={`0 0 16 ${effectiveSvgHeight}`}
+          style={{ height: `${effectiveSvgHeight}px` }}
+          className={`w-4 overflow-visible transition-all duration-300 ${c.glow}`}
         >
           <defs>
             <marker
               id={markerId}
               markerWidth="6"
               markerHeight="6"
-              refX="3"
-              refY="5"
+              refX="5"
+              refY="3"
               orient="auto"
             >
-              <polygon points="0 0, 3 6, 6 0" fill={c.stroke} />
+              <polygon points="0 0, 6 3, 0 6" fill={c.stroke} />
             </marker>
           </defs>
 
@@ -231,7 +252,7 @@ export function VerticalFlowArrow({
             x1="8"
             y1="2"
             x2="8"
-            y2={svgHeight - 7}
+            y2={effectiveSvgHeight - 8}
             stroke={c.stroke}
             strokeWidth="2.5"
             strokeDasharray={dashed ? "4,3" : undefined}
@@ -245,7 +266,7 @@ export function VerticalFlowArrow({
               <animate
                 attributeName="cy"
                 from="4"
-                to={svgHeight - 10}
+                to={effectiveSvgHeight - 11}
                 dur="1.2s"
                 repeatCount="indefinite"
               />
@@ -253,24 +274,32 @@ export function VerticalFlowArrow({
           )}
         </svg>
 
-        {/* Floating Label Badge */}
-        {label && (
+        {/* Floating Label & Sublabel Badge positioned cleanly to the side of the arrow line so it NEVER overlaps the arrow or adjacent process nodes */}
+        {hasLabel && (
           <div
-            className={`absolute px-2 py-0.5 rounded-md text-[8.5px] font-black uppercase tracking-wider whitespace-nowrap shadow-xs border transition-all duration-300 z-10 ${
-              c.badge
-            } group-hover:scale-105 group-hover:shadow-md`}
+            className={`absolute ${
+              labelPosition === "left"
+                ? "right-[calc(50%+14px)] items-end text-right"
+                : "left-[calc(50%+14px)] items-start text-left"
+            } top-1/2 -translate-y-1/2 flex flex-col pointer-events-auto z-20`}
           >
-            {label}
+            {label && (
+              <div
+                className={`px-2.5 py-0.5 rounded-md text-[8.5px] font-black uppercase tracking-wider whitespace-nowrap shadow-xs border transition-all duration-300 ${
+                  c.badge
+                } group-hover:scale-105 group-hover:shadow-md`}
+              >
+                {label}
+              </div>
+            )}
+            {sublabel && (
+              <span className="text-[7.5px] font-bold text-slate-500 uppercase tracking-tight whitespace-nowrap mt-0.5 px-0.5">
+                {sublabel}
+              </span>
+            )}
           </div>
         )}
       </div>
-
-      {/* Sublabel next to vertical arrow if provided */}
-      {sublabel && (
-        <span className="text-[8px] font-bold text-slate-500 uppercase tracking-tight ml-2">
-          {sublabel}
-        </span>
-      )}
     </div>
   );
 }

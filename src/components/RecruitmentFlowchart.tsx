@@ -1974,6 +1974,11 @@ export default function RecruitmentFlowchart({ onSwitchModule, onClose }: Recrui
     const c = colorMap[color];
     const markerId = `flow-arrow-head-${sourceId}-${targetId}`;
 
+    // Dynamically calculate width so the label badge and sublabel never overlap adjacent step cards
+    const labelLength = Math.max(label ? label.length : 0, sublabel ? sublabel.length * 0.85 : 0);
+    const requiredWidth = labelLength > 0 ? Math.ceil(labelLength * 7.5) + 32 : 44;
+    const effectiveWidth = Math.max(48, requiredWidth);
+
     return (
       <div
         key={`arrow-${sourceId}-${targetId}`}
@@ -1981,12 +1986,13 @@ export default function RecruitmentFlowchart({ onSwitchModule, onClose }: Recrui
           setSelectedStepId(targetId);
           setIsInspectorOpen(true);
         }}
-        className="flex flex-col items-center justify-center shrink-0 w-8 sm:w-10 relative select-none py-1 group cursor-pointer"
+        style={{ width: `${effectiveWidth}px`, minWidth: `${effectiveWidth}px` }}
+        className="flex flex-col items-center justify-center shrink-0 relative select-none py-1 group cursor-pointer px-1"
         title={`Flow: Step ${sourceId} ➔ Step ${targetId} (${label})`}
       >
         {/* Step Transition Label Badge */}
         <div
-          className={`px-1.5 py-0.5 rounded text-[8px] font-black uppercase tracking-wider whitespace-nowrap shadow-2xs border transition-all duration-300 z-10 ${
+          className={`px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-wider whitespace-nowrap shadow-2xs border transition-all duration-300 z-10 ${
             c.badge
           } ${isCurrent ? "scale-110 ring-2 ring-orange-400" : "group-hover:scale-105"}`}
         >
@@ -1994,10 +2000,11 @@ export default function RecruitmentFlowchart({ onSwitchModule, onClose }: Recrui
         </div>
 
         {/* SVG Arrow Line with Arrowhead and Moving Pulse */}
-        <div className="w-full h-6 flex items-center justify-center relative my-0.5">
+        <div className="w-full h-5 flex items-center justify-center relative my-0.5">
           <svg
-            viewBox="0 0 40 16"
-            className={`w-full h-4 overflow-visible transition-all duration-300 ${c.glow}`}
+            viewBox={`0 0 ${effectiveWidth} 16`}
+            style={{ width: `${effectiveWidth}px` }}
+            className={`h-4 overflow-visible transition-all duration-300 ${c.glow}`}
           >
             <defs>
               <marker
@@ -2014,9 +2021,9 @@ export default function RecruitmentFlowchart({ onSwitchModule, onClose }: Recrui
 
             {/* Main Connector Line */}
             <line
-              x1="2"
+              x1="4"
               y1="8"
-              x2="32"
+              x2={effectiveWidth - 8}
               y2="8"
               stroke={c.stroke}
               strokeWidth={isActive ? "3" : "2.5"}
@@ -2029,8 +2036,8 @@ export default function RecruitmentFlowchart({ onSwitchModule, onClose }: Recrui
               <circle r="2.5" cy="8" fill={isActive ? c.particle : "#94A3B8"}>
                 <animate
                   attributeName="cx"
-                  from="4"
-                  to="30"
+                  from="6"
+                  to={effectiveWidth - 11}
                   dur="1.2s"
                   repeatCount="indefinite"
                 />
@@ -2041,7 +2048,10 @@ export default function RecruitmentFlowchart({ onSwitchModule, onClose }: Recrui
 
         {/* Optional Micro Sub-label */}
         {sublabel && (
-          <span className="text-[7px] font-bold text-slate-400 truncate max-w-[46px] leading-none text-center">
+          <span 
+            style={{ maxWidth: `${effectiveWidth - 4}px` }}
+            className="text-[7px] font-bold text-slate-400 truncate leading-none text-center block mt-0.5"
+          >
             {sublabel}
           </span>
         )}

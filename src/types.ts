@@ -176,3 +176,57 @@ export interface ScheduleItem {
   updatedAt?: string;
 }
 
+export type ResignationType = "Formal" | "Immediate";
+
+export type ResignationStatus =
+  | "Pending Approval"
+  | "Notice Period"
+  | "Approved"
+  | "Completed"
+  | "Declined"
+  | "Rejected"
+  | "Cancelled";
+
+export type ResignationReason =
+  | "Career Change / Advancement"
+  | "Health"
+  | "Greener Pasture"
+  | "Relocation"
+  | "Studies / School"
+  | "Family"
+  | "Grievance"
+  | "Personal - Transportation"
+  | "Other";
+
+export interface ResignationAttachment {
+  name: string;
+  size?: string;
+  type?: string;
+  url?: string;
+}
+
+export interface ResignationRecord {
+  id: string;
+  sibsId: string;
+  employeeName: string;
+  position: string;
+  department: string;
+  account: string;
+  cluster: string;
+  type: ResignationType;
+  resignationDate?: string;
+  submissionDate?: string;
+  lastWorkingDate: string;
+  status: ResignationStatus | string;
+  reason: ResignationReason | string;
+  otherReasonDetails?: string;
+  remarks?: string;
+  attachments?: ResignationAttachment[];
+  rejectionReason?: string;
+  hrNotes?: string;
+  retractionReason?: string;
+  extensionReason?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+

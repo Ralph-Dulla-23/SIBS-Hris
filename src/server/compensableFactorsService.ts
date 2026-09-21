@@ -95,7 +95,7 @@ Analyze each of the 9 compensable factors thoroughly, extract direct text excerp
 
   try {
     const response = await ai.models.generateContent({
-      model: "gemini-3.7-flash",
+      model: "gemini-2.5-flash",
       contents: promptContent,
       config: {
         systemInstruction: SYSTEM_INSTRUCTION,
@@ -201,7 +201,7 @@ Analyze each of the 9 compensable factors thoroughly, extract direct text excerp
       factors: validatedFactors,
       overallSummary: parsed.overallSummary || `Evaluated 9 compensable factors for ${context.roleTitle || "Position"}.`,
       analyzedAt: new Date().toISOString(),
-      modelUsed: "gemini-3.7-flash",
+      modelUsed: "gemini-2.5-flash",
     };
   } catch (error: any) {
     console.error("Error during Gemini Compensable Factor Analysis:", error);

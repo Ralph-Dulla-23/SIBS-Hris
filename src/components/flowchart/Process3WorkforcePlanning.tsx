@@ -534,7 +534,7 @@ export default function Process3WorkforcePlanning({ onSwitchModule }: Process3Pr
               <VerticalFlowArrow
                 color="blue"
                 label="Feed Formula"
-                length="sm"
+                length="md"
                 animated={true}
               />
               <div 
