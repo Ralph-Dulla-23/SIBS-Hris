@@ -1,0 +1,8 @@
+{
+  "name": "SiBS HRIS",
+  "description": "SiBS Enterprise HRIS with Workforce Hiring, Employee Portal, Candidate Experience, and polished non-blocking Birthday Easter Egg celebration.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
