@@ -841,7 +841,7 @@ export default function SourcingAnalytics({ userEmail, onSwitchModule }: Sourcin
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-md overflow-hidden text-slate-900"
+              className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden text-slate-900"
             >
               <div className="p-4 bg-[#042C51] text-white flex items-center justify-between">
                 <div className="flex items-center gap-2">

@@ -220,7 +220,7 @@ export default function SourceDetailsModal({
         initial={{ opacity: 0, scale: 0.96, y: 10 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.96, y: 10 }}
-        className="bg-white rounded-2xl max-w-4xl w-full shadow-2xl border border-slate-200 my-6 overflow-hidden text-slate-900 flex flex-col max-h-[92vh]"
+        className="bg-white rounded-2xl max-w-4xl w-full shadow-2xl my-6 overflow-hidden text-slate-900 flex flex-col max-h-[92vh]"
       >
         {/* ==================== 1. HEADER BANNER (Matching Image 2) ==================== */}
         <div className="bg-[#042C51] text-white p-4 sm:p-5 shrink-0 relative overflow-hidden flex items-center justify-between border-b border-[#063866]">
@@ -546,7 +546,7 @@ export default function SourceDetailsModal({
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.95 }}
-                className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-lg overflow-hidden text-slate-900"
+                className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden text-slate-900"
               >
                 <div className="bg-[#042C51] text-white p-4 sm:p-5 flex items-center justify-between border-b border-[#063866]">
                   <div className="flex items-center gap-2.5">
@@ -685,7 +685,7 @@ export default function SourceDetailsModal({
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.9 }}
-                className="bg-white rounded-2xl p-6 shadow-2xl border border-slate-200 max-w-sm w-full space-y-4 text-center"
+                className="bg-white rounded-2xl p-6 shadow-2xl max-w-sm w-full space-y-4 text-center"
               >
                 <div className="w-12 h-12 rounded-2xl bg-red-50 text-red-600 mx-auto flex items-center justify-center">
                   <Trash2 className="w-6 h-6" />

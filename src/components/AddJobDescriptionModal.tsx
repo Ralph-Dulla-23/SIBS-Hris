@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   X,
   RotateCcw,
@@ -6,26 +6,33 @@ import {
   Info,
   Plus,
   Trash2,
+  FileText,
+  Briefcase,
+  Award,
+  ChevronDown,
+  Calendar,
   Bold,
   Italic,
+  Underline,
+  Strikethrough,
   List,
   ListOrdered,
+  Indent,
+  Outdent,
+  AlignLeft,
+  AlignCenter,
+  Eraser,
+  Undo,
+  Redo,
+  GraduationCap,
+  Check,
+  Search,
   Sparkles,
-  CheckCircle2,
-  FileText,
-  Building2,
-  Users,
-  Briefcase,
-  Calendar,
-  UserCheck,
-  Tag,
-  ShieldAlert,
-  ChevronDown,
-  Layers,
-  Award
+  MapPin,
+  ShieldCheck
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
-import { JobDescriptionRecord, JDStatus } from "./JobDescriptionPage";
+import { JobDescriptionRecord } from "./JobDescriptionPage";
 
 export interface CompetencyRow {
   id: string;
@@ -42,796 +49,1318 @@ interface AddJobDescriptionModalProps {
   triggerStatusModal?: (type: "success" | "error" | "info", title: string, message: string) => void;
 }
 
-const ALL_MBTI_TYPES = [
-  "INTJ", "ENTJ", "INFJ", "ENFP",
-  "ESTJ", "ISTJ", "ENTP", "ENFJ",
-  "ISFP", "ESFP", "ESFJ", "ISTP",
-  "ISFJ", "INTP", "INFP", "ESTP"
-];
-
-const DEFAULT_COMPETENCIES: CompetencyRow[] = [
+const INITIAL_COMPETENCIES: CompetencyRow[] = [
   {
     id: "comp-1",
-    title: "B2+ CEFR English Fluency",
-    description: "Ability to articulate complex solutions clearly via voice and chat without accent strain or grammatical errors.",
-    proficiency: "Excellent"
-  },
-  {
-    id: "comp-2",
-    title: "Technical Troubleshooting & CRM Navigation",
-    description: "Proficiency in diagnosing tier-1 network/software incidents using internal knowledge bases and Zendesk/Salesforce.",
+    title: "Communication & Active Listening",
+    description: "Ability to convey technical ideas clearly and de-escalate complex customer situations empathetically.",
     proficiency: "Proficient"
   },
   {
-    id: "comp-3",
-    title: "Empathy & Active Listening",
-    description: "De-escalate frustrated users with warmth, patience, and professional composure during call spikes.",
+    id: "comp-2",
+    title: "Problem Solving & Diagnostic Flow",
+    description: "Identifies root causes systematically using triage checklists and standard operating procedures.",
     proficiency: "Proficient"
   }
 ];
 
-export default function AddJobDescriptionModal({
+const PERSONALITY_OPTIONS = [
+  "Detail-oriented, adaptable, customer-focused, and proactive problem solver",
+  "High empathy, active listener, resilient under high inquiry volumes",
+  "Analytical, process-driven, methodical with high diagnostic rigor",
+  "Collaborative team player, self-starter, strong conflict-resolution skills",
+  "Results-oriented, agile, proactive communicator in fast-paced environments"
+];
+
+// Preset IQ Factor 1: Education Requirements
+const EDUCATION_OPTIONS = [
+  "Bachelor's Degree in Computer Science, Information Technology, or Engineering",
+  "Bachelor's Degree in Business Administration, Marketing, or Management",
+  "Bachelor's Degree in Communications, Psychology, or Liberal Arts",
+  "Bachelor's Degree (Any 4-Year College Course / Equivalent)",
+  "Associate Degree or College Undergraduate (At least 2 Years Completed)",
+  "High School Graduate / Senior High School (K-12) Graduate",
+  "Master's Degree / Post-Graduate Degree / MBA",
+  "Vocational / Technical Diploma / Trade Certification (TESDA or Equivalent)"
+];
+
+// Preset IQ Factor 2: Work Experience Requirements
+const WORK_EXPERIENCE_OPTIONS = [
+  "Fresh Graduates / Entry-Level Candidates Welcome (No Experience Required)",
+  "At least 6 Months of Customer Service or BPO Voice / Non-Voice Experience",
+  "1–2 Years of Customer Support, Helpdesk, or Technical Service Experience",
+  "2–3 Years of Specialized Technical Troubleshooting or Tier-2 Escalations",
+  "3–5 Years of Progressive Domain / Operational Experience",
+  "5+ Years of Extensive Subject Matter Expertise and Advanced Troubleshooting",
+  "1–2 Years of Supervisory, Team Lead, or Quality Coaching Experience",
+  "3+ Years of People Management and Service Delivery Leadership Experience"
+];
+
+// Preset Certifications & Affiliations
+const CERTIFICATION_OPTIONS = [
+  "ITIL Foundation / ITIL v4 Certification",
+  "Lean Six Sigma (Yellow Belt / Green Belt / Black Belt)",
+  "CompTIA A+ / Network+ / Security+",
+  "Cisco Certified Network Associate (CCNA)",
+  "Microsoft Certified: Azure Fundamentals / Modern Desktop",
+  "COPC Registered Coordinator / Quality Auditor",
+  "Project Management Professional (PMP / CAPM)",
+  "AWS Certified Cloud Practitioner / Solutions Architect",
+  "Google Cloud Certified Associate Cloud Engineer",
+  "No Specific Certifications Required"
+];
+
+// Preset Operating Locations & Work Models
+const LOCATION_OPTIONS = [
+  "Cebu IT Park, Cebu City (On-Site)",
+  "Bacolod Site, Negros Occidental (On-Site)",
+  "Metro Manila / Ortigas Center (On-Site)",
+  "Davao Site, Mindanao (On-Site)",
+  "Clark Freeport Zone, Pampanga (On-Site)",
+  "Hybrid Work Setup (2 Days Remote / 3 Days On-Site)",
+  "Permanent Work-From-Home (Remote / Distributed)"
+];
+
+// BPREDS Approved Account Coding Standards (e.g. YDL, CDC, CDN, USV)
+const ACCOUNT_OPTIONS = [
+  { code: "YDL", name: "Yomdel", label: "YDL – Yomdel" },
+  { code: "CDC", name: "CD Collect", label: "CDC – CD Collect" },
+  { code: "CDN", name: "Connect", label: "CDN – Connect" },
+  { code: "USV", name: "US Visa", label: "USV – US Visa" },
+  { code: "VZT", name: "Verizon Tech", label: "VZT – Verizon Tech" },
+  { code: "CMT", name: "Comcast Support", label: "CMT – Comcast Support" },
+  { code: "TMO", name: "T-Mobile Customer Care", label: "TMO – T-Mobile Customer Care" },
+  { code: "ISS", name: "Internal Shared Services", label: "ISS – Internal Shared Services" },
+  { code: "ERS", name: "Enterprise Retail Support", label: "ERS – Enterprise Retail Support" }
+];
+
+// REUSABLE MULTI-SELECT DROPDOWN COMPONENT
+interface MultiSelectDropdownProps {
+  label: string;
+  subLabel?: string;
+  badgeText?: string;
+  icon: React.ReactNode;
+  options: string[];
+  selectedValues: string[];
+  onChange: (values: string[]) => void;
+  placeholder?: string;
+  required?: boolean;
+}
+
+const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({
+  label,
+  subLabel,
+  badgeText,
+  icon,
+  options,
+  selectedValues,
+  onChange,
+  placeholder = "Select or search requirements...",
+  required = false
+}) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [customInput, setCustomInput] = useState("");
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Close on outside click
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const toggleOption = (option: string) => {
+    if (selectedValues.includes(option)) {
+      onChange(selectedValues.filter((v) => v !== option));
+    } else {
+      onChange([...selectedValues, option]);
+    }
+  };
+
+  const removeValue = (value: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    onChange(selectedValues.filter((v) => v !== value));
+  };
+
+  const handleAddCustom = () => {
+    const trimmed = customInput.trim();
+    if (trimmed && !selectedValues.includes(trimmed)) {
+      onChange([...selectedValues, trimmed]);
+      setCustomInput("");
+    }
+  };
+
+  const filteredOptions = options.filter((opt) =>
+    opt.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  return (
+    <div className="space-y-1.5" ref={dropdownRef}>
+      <div className="flex items-center justify-between">
+        <label className="flex items-center gap-1.5 text-xs font-bold text-slate-800">
+          <span className="text-[#FF5C28]">{icon}</span>
+          <span>{label}</span>
+          {required && <span className="text-red-500">*</span>}
+        </label>
+        {badgeText && (
+          <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200 uppercase tracking-wider">
+            {badgeText}
+          </span>
+        )}
+      </div>
+
+      {subLabel && <p className="text-[11px] text-slate-500">{subLabel}</p>}
+
+      {/* Trigger & Badge Display Box */}
+      <div
+        onClick={() => setIsOpen(!isOpen)}
+        className="min-h-[44px] p-2 bg-white border border-slate-300 rounded-xl cursor-pointer hover:border-slate-400 focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-[#042C51] transition-all flex items-center justify-between gap-2 flex-wrap"
+      >
+        <div className="flex flex-wrap gap-1.5 items-center flex-1">
+          {selectedValues.length === 0 ? (
+            <span className="text-xs text-slate-400 font-normal px-1.5 select-none">
+              {placeholder}
+            </span>
+          ) : (
+            selectedValues.map((val, idx) => (
+              <span
+                key={idx}
+                className="inline-flex items-center gap-1.5 bg-blue-50/80 text-[#042C51] border border-blue-200/80 px-2.5 py-1 rounded-lg text-xs font-semibold max-w-full truncate shadow-2xs group"
+              >
+                <span className="truncate">{val}</span>
+                <button
+                  type="button"
+                  onClick={(e) => removeValue(val, e)}
+                  className="p-0.5 text-slate-400 hover:text-red-600 rounded-full hover:bg-red-50 transition-colors"
+                  title="Remove"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              </span>
+            ))
+          )}
+        </div>
+
+        <div className="flex items-center gap-1.5 shrink-0 pr-1 text-slate-400">
+          {selectedValues.length > 0 && (
+            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-600">
+              {selectedValues.length} selected
+            </span>
+          )}
+          <ChevronDown
+            className={`w-4 h-4 transition-transform duration-200 ${
+              isOpen ? "rotate-180 text-[#042C51]" : ""
+            }`}
+          />
+        </div>
+      </div>
+
+      {/* Popover Dropdown */}
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: -4, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -4, scale: 0.98 }}
+            transition={{ duration: 0.15 }}
+            className="z-30 bg-white border border-slate-200 rounded-xl shadow-xl p-3 space-y-2.5 mt-1"
+          >
+            {/* Search Input */}
+            <div className="relative">
+              <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Search standard options..."
+                className="w-full pl-8 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-[#042C51]"
+                onClick={(e) => e.stopPropagation()}
+              />
+              {searchTerm && (
+                <button
+                  type="button"
+                  onClick={() => setSearchTerm("")}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              )}
+            </div>
+
+            {/* Quick Actions Row */}
+            <div className="flex items-center justify-between text-[11px] font-bold px-1 text-slate-500 border-b border-slate-100 pb-1.5">
+              <span>Standard Specifications</span>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => onChange([...options])}
+                  className="text-blue-700 hover:underline cursor-pointer"
+                >
+                  Select All
+                </button>
+                <span>•</span>
+                <button
+                  type="button"
+                  onClick={() => onChange([])}
+                  className="text-slate-500 hover:text-red-600 cursor-pointer"
+                >
+                  Clear
+                </button>
+              </div>
+            </div>
+
+            {/* Options List */}
+            <div className="max-h-48 overflow-y-auto divide-y divide-slate-50 pr-1 space-y-0.5">
+              {filteredOptions.length === 0 ? (
+                <div className="py-3 text-center text-xs text-slate-400">
+                  No matching standard options found.
+                </div>
+              ) : (
+                filteredOptions.map((opt, i) => {
+                  const isSelected = selectedValues.includes(opt);
+                  return (
+                    <div
+                      key={i}
+                      onClick={() => toggleOption(opt)}
+                      className={`flex items-start gap-2.5 p-2 rounded-lg text-xs cursor-pointer transition-colors ${
+                        isSelected
+                          ? "bg-blue-50 text-[#042C51] font-semibold"
+                          : "hover:bg-slate-50 text-slate-700 font-normal"
+                      }`}
+                    >
+                      <div
+                        className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 mt-0.5 transition-colors ${
+                          isSelected
+                            ? "bg-[#042C51] border-[#042C51] text-white"
+                            : "border-slate-300 bg-white"
+                        }`}
+                      >
+                        {isSelected && <Check className="w-3 h-3 stroke-[3]" />}
+                      </div>
+                      <span className="leading-snug">{opt}</span>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+
+            {/* Custom Option Input */}
+            <div className="pt-2 border-t border-slate-100 flex items-center gap-2">
+              <input
+                type="text"
+                value={customInput}
+                onChange={(e) => setCustomInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    handleAddCustom();
+                  }
+                }}
+                placeholder="Type a custom requirement & add..."
+                className="flex-1 px-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#042C51]"
+                onClick={(e) => e.stopPropagation()}
+              />
+              <button
+                type="button"
+                onClick={handleAddCustom}
+                disabled={!customInput.trim()}
+                className="px-3 py-1.5 bg-[#042C51] disabled:bg-slate-300 text-white rounded-lg text-xs font-bold transition-all shrink-0 cursor-pointer disabled:cursor-not-allowed"
+              >
+                Add
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
+
+export const AddJobDescriptionModal: React.FC<AddJobDescriptionModalProps> = ({
   isOpen,
   onClose,
   onSave,
   existingTemplates = [],
   triggerStatusModal
-}: AddJobDescriptionModalProps) {
-  // --- STATE DECLARATIONS ---
-  const [selectedTemplateId, setSelectedTemplateId] = useState<string>("NEW");
-  
-  // Section 1 State
+}) => {
+  // SECTION 1: HIRING REQUIREMENT & TEMPLATE LINK
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string>("");
   const [documentTitle, setDocumentTitle] = useState<string>("");
   const [roleTitle, setRoleTitle] = useState<string>("");
-  const [account, setAccount] = useState<string>("Verizon Tech");
+  const [account, setAccount] = useState<string>("VZT – Verizon Tech");
   const [department, setDepartment] = useState<string>("Technical Support");
-  const [dateRequested, setDateRequested] = useState<string>(new Date().toISOString().split("T")[0]);
-  const [requestedBy, setRequestedBy] = useState<string>("Alena Batacan (Operations Lead)");
-  const [statusBadge, setStatusBadge] = useState<JDStatus>("New Job Description");
+  const [location, setLocation] = useState<string>("Cebu IT Park, Cebu City (On-Site)");
+  const [dateRequested, setDateRequested] = useState<string>(
+    new Date().toISOString().split("T")[0]
+  );
+  const [preparedBy, setPreparedBy] = useState<string>("6496 – CANITAN, CRISTER ALBERCA");
 
-  // Section 2 State: Competencies
-  const [competencies, setCompetencies] = useState<CompetencyRow[]>(DEFAULT_COMPETENCIES);
-
-  // Section 3 State: Content & Details
+  // SECTION 2: JOB DESCRIPTION CONTENT
   const [reportsTo, setReportsTo] = useState<string>("Operations Manager");
   const [isSupervisory, setIsSupervisory] = useState<boolean>(false);
+
+  // IQ FACTORS 1 & 2 & CERTIFICATIONS TEXT AREAS
+  const [education, setEducation] = useState<string>(
+    "Bachelor's Degree (Any 4-Year College Course / Equivalent) or Associate Degree / College Undergraduate (At least 2 Years Completed)"
+  );
+  const [experience, setExperience] = useState<string>(
+    "1–2 Years of Customer Support, Helpdesk, or Technical Service Experience in a BPO or related operational environment"
+  );
+  const [certificationsAndAffiliations, setCertificationsAndAffiliations] = useState<string>(
+    "No Specific Certifications Required. ITIL Foundation or Lean Six Sigma certification is an advantage."
+  );
+
   const [positionOverview, setPositionOverview] = useState<string>(
-    "The Customer Support Representative is responsible for serving as the front-line contact for inbound user inquiries, maintaining high FCR and CSAT metrics while upholding SLA commitments."
+    "Describe the main purpose of the role."
   );
-  const [dutiesResponsibilities, setDutiesResponsibilities] = useState<string>(
-    "• Respond promptly and professionally to inbound customer calls and live chats.\n• Diagnose customer inquiries, troubleshoot network connectivity issues, and escalate complex tickets.\n• Maintain precise documentation in the CRM ticketing software for every interaction.\n• Meet or exceed weekly KPIs including Average Handling Time (AHT) and First Contact Resolution (FCR)."
+  const [qualifications, setQualifications] = useState<string>(
+    "Enter qualifications, characteristics, or notes."
   );
-  const [qualificationsCharacteristics, setQualificationsCharacteristics] = useState<string>(
-    "• Minimum 1 year of BPO or customer support experience in technical or telecom domains.\n• High school diploma or equivalent bachelor's degree.\n• Strong problem-solving aptitude with ability to multi-task across multiple monitor screens.\n• Flexible to work rotational night shifts, weekends, and holiday schedules."
+  const [targetPersonality, setTargetPersonality] = useState<string>(
+    "Detail-oriented, adaptable, customer-focused, and proactive problem solver"
   );
-  const [selectedPersonalityTypes, setSelectedPersonalityTypes] = useState<string[]>(["ENFP", "ESTJ", "INFJ"]);
+  const [responsibilities, setResponsibilities] = useState<string>(
+    "• Execute primary operational workflows and deliver high quality deliverables according to SLA benchmarks.\n• Diagnose and resolve escalated customer inquiries with speed, accuracy, and clear communication.\n• Maintain detailed records, notes, and metrics within CRM software and operational logging systems."
+  );
 
-  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  // SECTION 3: DESIRED COMPETENCIES & CAPABILITY MATRIX
+  const [competencies, setCompetencies] = useState<CompetencyRow[]>(INITIAL_COMPETENCIES);
 
-  // Auto-fill template values when selectedTemplateId changes
+  // Validation
+  const [errors, setErrors] = useState<{ [key: string]: string }>({});
+
+  // Reset / Default sync
   useEffect(() => {
-    if (selectedTemplateId === "NEW") {
-      setStatusBadge("New Job Description");
-    } else {
-      const found = existingTemplates.find((t) => t.id === selectedTemplateId);
-      if (found) {
-        setRoleTitle(found.roleTitle);
-        setDocumentTitle(found.documentTitle);
-        setAccount(found.account);
-        setDepartment(found.department);
-        setStatusBadge("Existing");
-        
-        // Convert string competencies to rows
-        if (found.competencies && found.competencies.length > 0) {
-          setCompetencies(
-            found.competencies.map((c, i) => ({
-              id: `tmpl-comp-${i}`,
-              title: c,
-              description: `Key expectation for ${c} as mandated in ${found.roleTitle} specification.`,
-              proficiency: i === 0 ? "Excellent" : "Proficient"
-            }))
-          );
-        }
-
-        if (found.responsibilities && found.responsibilities.length > 0) {
-          setDutiesResponsibilities(found.responsibilities.map((r) => `• ${r}`).join("\n"));
-        }
-
-        if (found.targetPersonality) {
-          setPositionOverview(`Master template for ${found.roleTitle}. Focus on candidate readiness and standard operational standards.`);
-        }
+    if (isOpen) {
+      if (!roleTitle) {
+        setRoleTitle("Senior Customer Support Representative");
+        setDocumentTitle("JD_Senior_Support_v1.0.pdf");
       }
     }
-  }, [selectedTemplateId, existingTemplates]);
+  }, [isOpen]);
 
-  // RESET ALL FIELDS
-  const handleReset = () => {
-    setSelectedTemplateId("NEW");
-    setDocumentTitle("");
-    setRoleTitle("");
-    setAccount("Verizon Tech");
-    setDepartment("Technical Support");
-    setDateRequested(new Date().toISOString().split("T")[0]);
-    setRequestedBy("Alena Batacan (Operations Lead)");
-    setStatusBadge("New Job Description");
-    setCompetencies(DEFAULT_COMPETENCIES);
-    setReportsTo("Operations Manager");
-    setIsSupervisory(false);
-    setPositionOverview(
-      "The Customer Support Representative is responsible for serving as the front-line contact for inbound user inquiries, maintaining high FCR and CSAT metrics while upholding SLA commitments."
-    );
-    setDutiesResponsibilities(
-      "• Respond promptly and professionally to inbound customer calls and live chats.\n• Diagnose customer inquiries, troubleshoot network connectivity issues, and escalate complex tickets.\n• Maintain precise documentation in the CRM ticketing software for every interaction.\n• Meet or exceed weekly KPIs including Average Handling Time (AHT) and First Contact Resolution (FCR)."
-    );
-    setQualificationsCharacteristics(
-      "• Minimum 1 year of BPO or customer support experience in technical or telecom domains.\n• High school diploma or equivalent bachelor's degree.\n• Strong problem-solving aptitude with ability to multi-task across multiple monitor screens.\n• Flexible to work rotational night shifts, weekends, and holiday schedules."
-    );
-    setSelectedPersonalityTypes(["ENFP", "ESTJ", "INFJ"]);
+  // Handle template selection
+  const handleTemplateSelect = (templateId: string) => {
+    setSelectedTemplateId(templateId);
+    if (!templateId) return;
+
+    const template = existingTemplates.find((t) => t.id === templateId);
+    if (template) {
+      setRoleTitle(template.roleTitle || "");
+      setDocumentTitle(template.documentTitle || `JD_${(template.roleTitle || "Role").replace(/\s+/g, "_")}_v1.0.pdf`);
+      setDepartment(template.department || "Technical Support");
+      setAccount(template.account || "VZT – Verizon Tech");
+      if (template.location) {
+        setLocation(template.location);
+      }
+      setIsSupervisory(
+        Boolean(
+          template.supervisoryLevel &&
+          !template.supervisoryLevel.toLowerCase().includes("individual") &&
+          !template.supervisoryLevel.toLowerCase().includes("non-supervisory")
+        )
+      );
+      if (template.educationRequirements && template.educationRequirements.length > 0) {
+        setEducation(template.educationRequirements.join("\n"));
+      }
+      if (template.experienceRequirements && template.experienceRequirements.length > 0) {
+        setExperience(template.experienceRequirements.join("\n"));
+      }
+      if (template.certificationsAndAffiliations && template.certificationsAndAffiliations.length > 0) {
+        setCertificationsAndAffiliations(template.certificationsAndAffiliations.join("\n"));
+      }
+      if (template.responsibilities && template.responsibilities.length > 0) {
+        setResponsibilities(template.responsibilities.join("\n"));
+      }
+      if (template.targetPersonality) {
+        setTargetPersonality(template.targetPersonality);
+      }
+      if (triggerStatusModal) {
+        triggerStatusModal("info", "Template Loaded", `Populated fields from template: ${template.roleTitle}`);
+      }
+    }
   };
 
-  // ADD COMPETENCY ROW
-  const handleAddCompetencyRow = () => {
-    const newRow: CompetencyRow = {
+  // Add Competency Row
+  const handleAddCompetency = () => {
+    const newComp: CompetencyRow = {
       id: `comp-${Date.now()}`,
       title: "",
       description: "",
       proficiency: "Proficient"
     };
-    setCompetencies((prev) => [...prev, newRow]);
+    setCompetencies((prev) => [...prev, newComp]);
   };
 
-  // DELETE COMPETENCY ROW
-  const handleDeleteCompetencyRow = (id: string) => {
+  // Remove Competency Row
+  const handleRemoveCompetency = (id: string) => {
     setCompetencies((prev) => prev.filter((c) => c.id !== id));
   };
 
-  // UPDATE COMPETENCY FIELD
-  const handleUpdateCompetency = (id: string, field: keyof CompetencyRow, value: string) => {
+  // Update Competency Row
+  const handleUpdateCompetency = (id: string, field: keyof CompetencyRow, value: any) => {
     setCompetencies((prev) =>
       prev.map((c) => (c.id === id ? { ...c, [field]: value } : c))
     );
   };
 
-  // TOGGLE PERSONALITY TYPE
-  const handleTogglePersonality = (mbti: string) => {
-    setSelectedPersonalityTypes((prev) =>
-      prev.includes(mbti) ? prev.filter((p) => p !== mbti) : [...prev, mbti]
+  // Reset Form
+  const handleReset = () => {
+    setSelectedTemplateId("");
+    setRoleTitle("Senior Customer Support Representative");
+    setDocumentTitle("JD_Senior_Support_v1.0.pdf");
+    setAccount("VZT – Verizon Tech");
+    setDepartment("Technical Support");
+    setLocation("Cebu IT Park, Cebu City (On-Site)");
+    setDateRequested(new Date().toISOString().split("T")[0]);
+    setPreparedBy("6496 – CANITAN, CRISTER ALBERCA");
+    setReportsTo("Operations Manager");
+    setIsSupervisory(false);
+    setEducation(
+      "Bachelor's Degree (Any 4-Year College Course / Equivalent) or Associate Degree / College Undergraduate (At least 2 Years Completed)"
     );
+    setExperience(
+      "1–2 Years of Customer Support, Helpdesk, or Technical Service Experience in a BPO or related operational environment"
+    );
+    setCertificationsAndAffiliations(
+      "No Specific Certifications Required. ITIL Foundation or Lean Six Sigma certification is an advantage."
+    );
+    setPositionOverview("Describe the main purpose of the role.");
+    setQualifications("Enter qualifications, characteristics, or notes.");
+    setTargetPersonality("Detail-oriented, adaptable, customer-focused, and proactive problem solver");
+    setResponsibilities(
+      "• Execute primary operational workflows and deliver high quality deliverables according to SLA benchmarks.\n• Diagnose and resolve escalated customer inquiries with speed, accuracy, and clear communication.\n• Maintain detailed records, notes, and metrics within CRM software and operational logging systems."
+    );
+    setCompetencies(INITIAL_COMPETENCIES);
+    setErrors({});
+
+    if (triggerStatusModal) {
+      triggerStatusModal("info", "Form Reset", "All fields have been reset to default values.");
+    }
   };
 
-  // SUBMIT HANDLER WITH BACKEND API / API PROXY CALL
-  const handleSaveJobDescription = async (e: React.FormEvent) => {
-    e.preventDefault();
+  // Save Job Description
+  const handleSave = () => {
+    const newErrors: { [key: string]: string } = {};
+    if (!roleTitle.trim()) newErrors.roleTitle = "Role Title is required";
+    if (!documentTitle.trim()) newErrors.documentTitle = "Document Title is required";
 
-    if (!roleTitle.trim()) {
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
       if (triggerStatusModal) {
-        triggerStatusModal("error", "Validation Error", "Please provide a valid Role Title for the job description.");
+        triggerStatusModal("error", "Validation Error", "Please fill in all mandatory fields before saving.");
       }
       return;
     }
 
-    if (!documentTitle.trim()) {
-      if (triggerStatusModal) {
-        triggerStatusModal("error", "Validation Error", "Please specify a Document Title filename (e.g. JD_Role_Name.pdf).");
-      }
-      return;
-    }
+    const todayStr = dateRequested || new Date().toISOString().split("T")[0];
+    const generatedId = `JD-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 900) + 100)}`;
 
-    setIsSubmitting(true);
+    const eduList = education.split("\n").map((s) => s.trim()).filter(Boolean);
+    const expList = experience.split("\n").map((s) => s.trim()).filter(Boolean);
+    const certList = certificationsAndAffiliations.split("\n").map((s) => s.trim()).filter(Boolean);
+    const respList = responsibilities.split("\n").map((s) => s.trim()).filter(Boolean);
 
-    const formattedDocumentTitle = documentTitle.endsWith(".pdf")
-      ? documentTitle
-      : `${documentTitle.trim().replace(/\s+/g, "_")}.pdf`;
-
-    const competencyTitles = competencies
-      .map((c) => c.title.trim())
-      .filter(Boolean);
-
-    const responsibilityLines = dutiesResponsibilities
-      .split("\n")
-      .map((line) => line.replace(/^[•\-\*\s]+/, "").trim())
-      .filter(Boolean);
-
-    const newRecord: JobDescriptionRecord = {
-      id: `JD-2026-${Math.floor(100 + Math.random() * 900)}`,
-      documentTitle: formattedDocumentTitle,
+    const newJDRecord: JobDescriptionRecord = {
+      id: generatedId,
+      documentTitle: documentTitle.trim(),
       roleTitle: roleTitle.trim(),
-      department,
-      account,
-      linkedHiringNeed: selectedTemplateId !== "NEW" 
-        ? `Linked Template: ${selectedTemplateId}` 
-        : `REQ-2026-INTAKE (${department})`,
-      supervisoryLevel: isSupervisory ? "Manager / Supervisor" : "Individual Contributor",
-      status: selectedTemplateId !== "NEW" ? "Existing" : "New Job Description",
-      dateRequested: dateRequested || new Date().toISOString().split("T")[0],
+      department: department.trim(),
+      account: account.trim(),
+      location: location.trim(),
+      linkedHiringNeed: `REQ-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 90) + 10)} (New Position)`,
+      supervisoryLevel: isSupervisory ? ("Supervisor" as any) : ("Individual Contributor" as any),
+      status: "New Job Description" as any,
+      dateRequested: todayStr,
       versionNo: "v1.0",
-      competencies: competencyTitles.length > 0 
-        ? competencyTitles 
-        : ["Communication", "Domain Knowledge", "Customer Service"],
-      responsibilities: responsibilityLines.length > 0 
-        ? responsibilityLines 
-        : ["Execute primary role responsibilities per SLA benchmarks."],
-      targetPersonality: selectedPersonalityTypes.length > 0 
-        ? selectedPersonalityTypes.join(", ") 
-        : "Adaptable, resilient, professional team player",
+      educationRequirements: eduList.length > 0 ? eduList : [education.trim() || "Standard Education Requirement"],
+      experienceRequirements: expList.length > 0 ? expList : [experience.trim() || "Standard Work Experience Requirement"],
+      certificationsAndAffiliations: certList.length > 0 ? certList : [certificationsAndAffiliations.trim() || "No Specific Certifications Required"],
+      competencies: competencies.map((c) => c.title || c.description || "Competency Standard"),
+      compensableFactors: [
+        {
+          id: 1,
+          factorName: "Education",
+          category: "IQ",
+          criteria: eduList.join("; ") || education.trim() || "Bachelor's degree or equivalent college degree.",
+          weightOrPoints: 10
+        },
+        {
+          id: 2,
+          factorName: "Work Experience",
+          category: "IQ",
+          criteria: expList.join("; ") || experience.trim() || "Minimum 1-2 years relevant experience.",
+          weightOrPoints: 15
+        },
+        {
+          id: 3,
+          factorName: "Desired Competencies",
+          category: "IQ",
+          criteria: competencies.map(c => c.title || c.description).join("; ") || "Core diagnostic and operational competencies.",
+          weightOrPoints: 15
+        },
+        {
+          id: 4,
+          factorName: "Work Complexity / Budget Authority",
+          category: "IQ",
+          criteria: "Handles moderate to high complexity task streams and deliverables.",
+          weightOrPoints: 10
+        },
+        {
+          id: 5,
+          factorName: "Independent Judgment / Decision Making / Problem Solving",
+          category: "IQ",
+          criteria: "Autonomous resolution of operational roadblocks within established SOP guidelines.",
+          weightOrPoints: 15
+        },
+        {
+          id: 6,
+          factorName: "Leadership / Team Influence",
+          category: "EQ",
+          criteria: isSupervisory ? "Provides direct supervision and operational leadership." : "Collaborative peer contributor and team player.",
+          weightOrPoints: 10
+        },
+        {
+          id: 7,
+          factorName: "Customer Focus & Interpersonal Skill",
+          category: "EQ",
+          criteria: targetPersonality || "High empathy, active listener, resilient under pressure.",
+          weightOrPoints: 10
+        },
+        {
+          id: 8,
+          factorName: "Work Environment & Physical Demands",
+          category: "CONDITIONS",
+          criteria: `${location || "Standard office/BPO facility"} or compliant remote workstation.`,
+          weightOrPoints: 5
+        },
+        {
+          id: 9,
+          factorName: "Work Hazards / Health & Safety",
+          category: "CONDITIONS",
+          criteria: "Low physical hazard; prolonged computer screen usage and seated workstation.",
+          weightOrPoints: 10
+        }
+      ],
+      responsibilities: respList.length > 0 ? respList : [responsibilities.trim() || "Execute key operational workflows and deliverables."],
+      targetPersonality: targetPersonality.trim(),
       revisionHistory: [
         {
-          id: `REV-${Date.now()}`,
-          date: new Date().toISOString().split("T")[0],
-          author: requestedBy || "Operations / HR Administrator",
+          id: `REV-${Date.now().toString().slice(-4)}`,
+          date: todayStr,
+          author: preparedBy.split("–")[1]?.trim() || "HR Specialist",
           version: "v1.0",
-          remarks: `Initial creation via Add Job Description Modal. Reports to: ${reportsTo}.`
+          remarks: "Job Description created with defined Education, Work Experience, and Competency requirements."
         }
       ]
     };
 
-    try {
-      // Simulate/Attempt Backend API Call to /api/recruitment/job-descriptions
-      const response = await fetch("/api/recruitment/job-descriptions", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(newRecord)
-      }).catch(() => null);
-
-      if (response && response.ok) {
-        console.log("Job Description successfully posted to backend API");
-      }
-    } catch (err) {
-      console.warn("Backend API endpoint not available; utilizing client store fallback.", err);
-    } finally {
-      setIsSubmitting(false);
-      onSave(newRecord);
-      if (triggerStatusModal) {
-        triggerStatusModal(
-          "success",
-          "Job Description Saved",
-          `The job description record for "${newRecord.roleTitle}" (${newRecord.documentTitle}) has been submitted and registered.`
-        );
-      }
-      onClose();
-    }
+    onSave(newJDRecord);
+    onClose();
   };
 
   if (!isOpen) return null;
 
+  // Rich text editor toolbar component
+  const EditorToolbar = () => (
+    <div className="flex items-center gap-1 px-3 py-1.5 bg-white border-b border-slate-200 text-slate-500 overflow-x-auto select-none">
+      <button type="button" className="p-1 hover:bg-slate-100 hover:text-slate-800 rounded transition-colors" title="Bold">
+        <Bold className="w-3.5 h-3.5" />
+      </button>
+      <button type="button" className="p-1 hover:bg-slate-100 hover:text-slate-800 rounded transition-colors" title="Italic">
+        <Italic className="w-3.5 h-3.5" />
+      </button>
+      <button type="button" className="p-1 hover:bg-slate-100 hover:text-slate-800 rounded transition-colors" title="Underline">
+        <Underline className="w-3.5 h-3.5" />
+      </button>
+      <button type="button" className="p-1 hover:bg-slate-100 hover:text-slate-800 rounded transition-colors" title="Strikethrough">
+        <Strikethrough className="w-3.5 h-3.5" />
+      </button>
+
+      <div className="h-4 w-px bg-slate-200 mx-1" />
+
+      <button type="button" className="p-1 hover:bg-slate-100 hover:text-slate-800 rounded transition-colors" title="Bullet List">
+        <List className="w-3.5 h-3.5" />
+      </button>
+      <button type="button" className="p-1 hover:bg-slate-100 hover:text-slate-800 rounded transition-colors" title="Numbered List">
+        <ListOrdered className="w-3.5 h-3.5" />
+      </button>
+      <button type="button" className="p-1 hover:bg-slate-100 hover:text-slate-800 rounded transition-colors" title="Outdent">
+        <Outdent className="w-3.5 h-3.5" />
+      </button>
+      <button type="button" className="p-1 hover:bg-slate-100 hover:text-slate-800 rounded transition-colors" title="Indent">
+        <Indent className="w-3.5 h-3.5" />
+      </button>
+
+      <div className="h-4 w-px bg-slate-200 mx-1" />
+
+      <button type="button" className="p-1 hover:bg-slate-100 hover:text-slate-800 rounded transition-colors" title="Align Left">
+        <AlignLeft className="w-3.5 h-3.5" />
+      </button>
+      <button type="button" className="p-1 hover:bg-slate-100 hover:text-slate-800 rounded transition-colors" title="Align Center">
+        <AlignCenter className="w-3.5 h-3.5" />
+      </button>
+
+      <div className="h-4 w-px bg-slate-200 mx-1" />
+
+      <button type="button" className="p-1 hover:bg-slate-100 hover:text-slate-800 rounded transition-colors" title="Clear Formatting">
+        <Eraser className="w-3.5 h-3.5" />
+      </button>
+      <button type="button" className="p-1 hover:bg-slate-100 hover:text-slate-800 rounded transition-colors" title="Undo">
+        <Undo className="w-3.5 h-3.5" />
+      </button>
+      <button type="button" className="p-1 hover:bg-slate-100 hover:text-slate-800 rounded transition-colors" title="Redo">
+        <Redo className="w-3.5 h-3.5" />
+      </button>
+    </div>
+  );
+
   return (
-    <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-[#042C51]/80 backdrop-blur-sm overflow-y-auto">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.96, y: 10 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.96, y: 10 }}
-          transition={{ duration: 0.2 }}
-          className="bg-white rounded-2xl max-w-4xl w-full shadow-2xl border border-[#E6ECF2] my-6 flex flex-col max-h-[92vh] overflow-hidden text-[#101828]"
-        >
-          {/* ==================== 1. MODAL HEADER ==================== */}
-          <div className="bg-[#042C51] text-white p-5 px-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#063a6b] shrink-0">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-white/10 border border-white/20 text-[#FF5C28] flex items-center justify-center shadow-inner shrink-0">
-                <FileText className="w-5 h-5" />
-              </div>
-              <div>
-                <h2 className="text-lg font-black tracking-tight text-white flex items-center gap-2">
-                  <span>Add Job Description</span>
-                  <span className="text-[10px] bg-[#FF5C28] text-white font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
-                    Specification
-                  </span>
-                </h2>
-                <p className="text-xs text-slate-300 leading-snug">
-                  Create or update job description specifications for hiring requirements.
-                </p>
-              </div>
+    <div
+      id="add-jd-modal-overlay"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-2 sm:p-4 overflow-y-auto"
+    >
+      <motion.div
+        initial={{ opacity: 0, scale: 0.99, y: 8 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.99, y: 8 }}
+        transition={{ duration: 0.18 }}
+        className="bg-[#F8FAFC] rounded-2xl shadow-2xl w-full max-w-6xl my-auto max-h-[94vh] flex flex-col border border-slate-200 overflow-hidden font-sans"
+      >
+        {/* MODAL HEADER */}
+        <div className="bg-[#042C51] text-white px-6 py-4 flex items-center justify-between shrink-0 border-b border-[#031d36]">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-blue-900/60 border border-blue-400/20 flex items-center justify-center shadow-xs">
+              <FileText className="w-5 h-5 text-[#FF5C28]" />
             </div>
-
-            {/* Modal Header Actions */}
-            <div className="flex items-center gap-2 self-end sm:self-center">
-              <button
-                type="button"
-                onClick={handleReset}
-                className="px-3 py-1.5 bg-white/10 hover:bg-white/20 text-slate-200 hover:text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer border border-white/10"
-                title="Reset all form fields to initial clean state"
-              >
-                <RotateCcw className="w-3.5 h-3.5 text-slate-300" />
-                <span>Reset</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={handleSaveJobDescription}
-                disabled={isSubmitting}
-                className="px-4 py-1.5 bg-[#FF5C28] hover:bg-[#e04f20] active:scale-98 text-white rounded-xl text-xs font-bold transition-all shadow-md flex items-center gap-1.5 cursor-pointer border border-orange-400/30 disabled:opacity-50"
-              >
-                <Save className="w-3.5 h-3.5" />
-                <span>{isSubmitting ? "Saving..." : "Save Job Description"}</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={onClose}
-                className="p-1.5 text-slate-300 hover:text-white hover:bg-white/10 rounded-xl transition-all cursor-pointer ml-1"
-                title="Close dialog"
-              >
-                <X className="w-5 h-5" />
-              </button>
+            <div>
+              <div className="flex items-center gap-2">
+                <h2 className="text-base sm:text-lg font-black tracking-wide uppercase text-white">
+                  ADD JOB DESCRIPTION
+                </h2>
+                <span className="px-2 py-0.5 rounded bg-[#FF5C28] text-white text-[10px] font-black uppercase tracking-wider">
+                  SPECIFICATION
+                </span>
+              </div>
+              <p className="text-xs text-blue-100/85 font-normal mt-0.5">
+                Create or update job description specifications for hiring requirements.
+              </p>
             </div>
           </div>
 
-          {/* SCROLLABLE MODAL BODY */}
-          <div className="p-6 overflow-y-auto space-y-6 flex-1 bg-slate-50/50">
-            {/* ==================== 2. INFORMATION BANNER ==================== */}
-            <div className="bg-gradient-to-r from-blue-50 via-indigo-50/40 to-slate-50 p-4 rounded-xl border border-blue-200/80 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-              <div className="flex items-start gap-3">
-                <div className="w-8 h-8 rounded-lg bg-blue-600 text-white flex items-center justify-center shrink-0 mt-0.5 shadow-sm">
-                  <Info className="w-4 h-4" />
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={handleReset}
+              className="px-3.5 py-1.5 rounded-lg border border-slate-400/30 bg-white/5 hover:bg-white/10 text-white text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
+              title="Reset fields to default"
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+              <span>Reset</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={handleSave}
+              className="px-4 py-2 rounded-lg bg-[#FF5C28] hover:bg-[#FF5C28]/90 text-white text-xs font-black uppercase tracking-wider transition-all flex items-center gap-2 shadow-sm cursor-pointer active:scale-98"
+            >
+              <Save className="w-4 h-4 text-white" />
+              <span>Save Job Description</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={onClose}
+              className="p-1.5 rounded-lg hover:bg-white/10 text-white/80 hover:text-white transition-all cursor-pointer"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+
+        {/* MODAL BODY */}
+        <div className="p-5 sm:p-6 overflow-y-auto space-y-6 flex-1 bg-[#F8FAFC] text-slate-900 text-sm">
+          {/* CONTEXTUAL SPECIFICATION GUIDE BANNER */}
+          <div className="bg-blue-50/70 border border-blue-200/90 rounded-2xl p-4 flex items-start gap-3.5 shadow-2xs">
+            <div className="w-7 h-7 rounded-full bg-blue-600 text-white flex items-center justify-center shrink-0 mt-0.5 shadow-xs">
+              <Info className="w-4 h-4" />
+            </div>
+            <div className="space-y-0.5">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h3 className="text-xs sm:text-sm font-black text-[#042C51]">
+                  Contextual Specification Guide
+                </h3>
+                <span className="px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 border border-indigo-200 text-[10px] font-bold uppercase tracking-wider">
+                  NEW SPEC MODE
+                </span>
+              </div>
+              <p className="text-xs text-slate-600 leading-relaxed">
+                You are creating a new Job Description specification. Define educational requirements, work experience benchmarks, supervisory level, and competency standards for the recruitment intake.
+              </p>
+            </div>
+          </div>
+
+          {/* SECTION 1: HIRING REQUIREMENT & TEMPLATE LINK */}
+          <div className="bg-white rounded-2xl border border-slate-200/90 p-5 sm:p-6 shadow-xs space-y-4">
+            {/* Header */}
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div className="space-y-0.5">
+                <div className="flex items-center gap-2">
+                  <Briefcase className="w-4 h-4 text-[#FF5C28]" />
+                  <h3 className="text-xs sm:text-sm font-black text-[#042C51] tracking-wide uppercase">
+                    SECTION 1: HIRING REQUIREMENT &amp; TEMPLATE LINK
+                  </h3>
                 </div>
-                <div className="space-y-0.5">
-                  <h4 className="text-xs font-black text-[#042C51] flex items-center gap-2">
-                    <span>Contextual Specification Guide</span>
-                    {selectedTemplateId === "NEW" ? (
-                      <span className="bg-indigo-100 text-indigo-800 text-[10px] font-bold px-2 py-0.5 rounded-full border border-indigo-200">
-                        New Spec Mode
-                      </span>
-                    ) : (
-                      <span className="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded-full border border-emerald-200">
-                        Template Linked Mode
-                      </span>
-                    )}
-                  </h4>
-                  <p className="text-xs text-slate-600 leading-relaxed">
-                    {selectedTemplateId === "NEW"
-                      ? "You are creating a new Job Description specification. Define competency standards, supervisory level, and core responsibilities for upcoming recruitment intake."
-                      : "Linking to an existing Job Description template auto-populates approved operational benchmarks. Custom modifications will be stored as a new version."}
-                  </p>
-                </div>
+                <p className="text-xs text-slate-500">
+                  Select an approved template or create a new record, then complete all existing ownership and position fields.
+                </p>
               </div>
 
-              <div className="shrink-0 self-end sm:self-center">
-                {statusBadge === "Existing" || statusBadge === "Approved" ? (
-                  <span className="bg-emerald-500 text-white text-[11px] font-black px-3 py-1 rounded-full inline-flex items-center gap-1.5 shadow-sm">
-                    <CheckCircle2 className="w-3.5 h-3.5" />
-                    {statusBadge} Template
-                  </span>
-                ) : (
-                  <span className="bg-[#042C51] text-white text-[11px] font-black px-3 py-1 rounded-full inline-flex items-center gap-1.5 shadow-sm">
-                    <Sparkles className="w-3.5 h-3.5 text-[#FF5C28]" />
-                    {statusBadge}
-                  </span>
-                )}
+              <div className="flex items-center gap-2 shrink-0">
+                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">STATUS</span>
+                <span className="border border-orange-300 bg-orange-50/70 text-[#FF5C28] font-bold text-xs px-3 py-0.5 rounded-full">
+                  For Approval
+                </span>
               </div>
             </div>
 
-            <form onSubmit={handleSaveJobDescription} className="space-y-6">
-              {/* ==================== 3. SECTION 1: HIRING REQUIREMENT LINK ==================== */}
-              <div className="bg-white p-5 rounded-2xl border border-[#E6ECF2] shadow-xs space-y-4">
-                <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                  <h3 className="text-xs font-black text-[#042C51] uppercase tracking-wider flex items-center gap-2">
-                    <Briefcase className="w-4 h-4 text-[#FF5C28]" />
-                    Section 1: Hiring Requirement & Template Link
-                  </h3>
-                  <span className="text-[10px] font-bold text-slate-400">Metadata & Linking</span>
+            {/* Existing Job Description Template dropdown */}
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between">
+                <label className="block text-xs font-bold text-slate-700">
+                  Existing Job Description Template
+                </label>
+                <span className="text-xs font-bold text-[#042C51] hover:underline cursor-pointer">
+                  Select template or create new
+                </span>
+              </div>
+
+              <div className="relative">
+                <select
+                  value={selectedTemplateId}
+                  onChange={(e) => handleTemplateSelect(e.target.value)}
+                  className="w-full appearance-none px-4 py-2.5 text-xs bg-white border border-slate-300 rounded-xl font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-[#042C51] transition-all cursor-pointer"
+                >
+                  <option value="">No Existing Job Description – New Job Description</option>
+                  {existingTemplates.map((t) => (
+                    <option key={t.id} value={t.id}>
+                      {t.roleTitle} ({t.department} - {t.account})
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown className="w-4 h-4 text-slate-400 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              </div>
+            </div>
+
+            {/* Grid Form Fields Row 1 */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 pt-1">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                  Document Title <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={documentTitle}
+                  onChange={(e) => {
+                    setDocumentTitle(e.target.value);
+                    if (errors.documentTitle) setErrors((prev) => ({ ...prev, documentTitle: "" }));
+                  }}
+                  placeholder="e.g. JD_Senior_Support_v1.0.pdf"
+                  className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-300 bg-white font-medium text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-[#042C51] transition-all"
+                />
+                {errors.documentTitle && <p className="text-[11px] text-red-500 mt-1">{errors.documentTitle}</p>}
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                  Role Title <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={roleTitle}
+                  onChange={(e) => {
+                    setRoleTitle(e.target.value);
+                    if (errors.roleTitle) setErrors((prev) => ({ ...prev, roleTitle: "" }));
+                  }}
+                  placeholder="e.g. Senior Customer Support Representative"
+                  className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-300 bg-white font-medium text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-[#042C51] transition-all"
+                />
+                {errors.roleTitle && <p className="text-[11px] text-red-500 mt-1">{errors.roleTitle}</p>}
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                  Account / Client (BPREDS 3-Letter Code) <span className="text-red-500">*</span>
+                </label>
+                <div className="relative">
+                  <select
+                    value={account}
+                    onChange={(e) => setAccount(e.target.value)}
+                    className="w-full appearance-none px-3.5 py-2.5 text-xs rounded-xl border border-slate-300 bg-white font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-[#042C51] transition-all cursor-pointer"
+                  >
+                    {ACCOUNT_OPTIONS.map((acc) => (
+                      <option key={acc.code} value={acc.label}>
+                        {acc.label}
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown className="w-4 h-4 text-slate-400 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                 </div>
+              </div>
+            </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {/* Existing Job Description Dropdown */}
-                  <div className="sm:col-span-2 lg:col-span-3">
-                    <label className="block text-xs font-bold text-[#042C51] mb-1.5 flex items-center justify-between">
-                      <span>Existing Job Description Template</span>
-                      <span className="text-[10px] text-slate-400 font-normal">Select template or create new</span>
-                    </label>
-                    <select
-                      value={selectedTemplateId}
-                      onChange={(e) => setSelectedTemplateId(e.target.value)}
-                      className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:bg-white focus:border-[#042C51] focus:ring-2 focus:ring-[#042C51]/10 outline-hidden transition-all cursor-pointer"
-                    >
-                      <option value="NEW">No Existing Job Description — New Job Description</option>
-                      {existingTemplates.map((tmpl) => (
-                        <option key={tmpl.id} value={tmpl.id}>
-                          {tmpl.id} — {tmpl.roleTitle} ({tmpl.department} • {tmpl.account})
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  {/* Document Title */}
-                  <div>
-                    <label className="block text-xs font-bold text-[#042C51] mb-1">
-                      Document Title <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      placeholder="e.g. JD_Senior_Support_v1.0.pdf"
-                      value={documentTitle}
-                      onChange={(e) => setDocumentTitle(e.target.value)}
-                      className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:bg-white focus:border-[#042C51] outline-hidden transition-all"
-                    />
-                  </div>
-
-                  {/* Role Title */}
-                  <div>
-                    <label className="block text-xs font-bold text-[#042C51] mb-1">
-                      Role Title <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      placeholder="e.g. Senior Customer Support Representative"
-                      value={roleTitle}
-                      onChange={(e) => setRoleTitle(e.target.value)}
-                      className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:bg-white focus:border-[#042C51] outline-hidden transition-all"
-                    />
-                  </div>
-
-                  {/* Account / Client */}
-                  <div>
-                    <label className="block text-xs font-bold text-[#042C51] mb-1">Account / Client</label>
-                    <select
-                      value={account}
-                      onChange={(e) => setAccount(e.target.value)}
-                      className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:bg-white focus:border-[#042C51] outline-hidden cursor-pointer"
-                    >
-                      <option value="Verizon Tech">Verizon Tech</option>
-                      <option value="Comcast Support">Comcast Support</option>
-                      <option value="Aetna Health">Aetna Health</option>
-                      <option value="Internal HR Ops">Internal HR Ops</option>
-                      <option value="Global WFM">Global WFM</option>
-                      <option value="Healthcare Solutions">Healthcare Solutions</option>
-                      <option value="Financial Services">Financial Services</option>
-                    </select>
-                  </div>
-
-                  {/* Department */}
-                  <div>
-                    <label className="block text-xs font-bold text-[#042C51] mb-1">Department</label>
-                    <select
-                      value={department}
-                      onChange={(e) => setDepartment(e.target.value)}
-                      className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:bg-white focus:border-[#042C51] outline-hidden cursor-pointer"
-                    >
-                      <option value="Technical Support">Technical Support</option>
-                      <option value="Operations">Operations</option>
-                      <option value="Executive Tech">Executive Tech</option>
-                      <option value="Healthcare Ops">Healthcare Ops</option>
-                      <option value="Talent Acquisition">Talent Acquisition</option>
-                      <option value="Workforce Management">Workforce Management</option>
-                      <option value="Finance & Billing">Finance & Billing</option>
-                    </select>
-                  </div>
-
-                  {/* Date Requested */}
-                  <div>
-                    <label className="block text-xs font-bold text-[#042C51] mb-1">Date Requested</label>
-                    <input
-                      type="date"
-                      value={dateRequested}
-                      onChange={(e) => setDateRequested(e.target.value)}
-                      className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:bg-white focus:border-[#042C51] outline-hidden"
-                    />
-                  </div>
-
-                  {/* Prepared By / Requested By */}
-                  <div>
-                    <label className="block text-xs font-bold text-[#042C51] mb-1">Prepared By / Requested By</label>
-                    <select
-                      value={requestedBy}
-                      onChange={(e) => setRequestedBy(e.target.value)}
-                      className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:bg-white focus:border-[#042C51] outline-hidden cursor-pointer"
-                    >
-                      <option value="Alena Batacan (Operations Lead)">Alena Batacan (Operations Lead)</option>
-                      <option value="Ralph Dulla (Super Admin)">Ralph Dulla (Super Admin)</option>
-                      <option value="Sarah Jenkins (TA Lead)">Sarah Jenkins (TA Lead)</option>
-                      <option value="Michael Chang (WFM Director)">Michael Chang (WFM Director)</option>
-                      <option value="Department Operations Manager">Department Operations Manager</option>
-                    </select>
-                  </div>
+            {/* Grid Form Fields Row 2 */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                  Department <span className="text-red-500">*</span>
+                </label>
+                <div className="relative">
+                  <select
+                    value={department}
+                    onChange={(e) => setDepartment(e.target.value)}
+                    className="w-full appearance-none px-3.5 py-2.5 text-xs rounded-xl border border-slate-300 bg-white font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-[#042C51] transition-all cursor-pointer"
+                  >
+                    <option value="Technical Support">Technical Support</option>
+                    <option value="Customer Care">Customer Care</option>
+                    <option value="Operations">Operations</option>
+                    <option value="Talent Acquisition">Talent Acquisition</option>
+                    <option value="Human Resources">Human Resources</option>
+                    <option value="Quality Assurance">Quality Assurance</option>
+                    <option value="Workforce Management">Workforce Management</option>
+                  </select>
+                  <ChevronDown className="w-4 h-4 text-slate-400 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                 </div>
               </div>
 
-              {/* ==================== 4. SECTION 2: DESIRED COMPETENCIES TABLE ==================== */}
-              <div className="bg-white p-5 rounded-2xl border border-[#E6ECF2] shadow-xs space-y-4">
-                <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                  <div>
-                    <h3 className="text-xs font-black text-[#042C51] uppercase tracking-wider flex items-center gap-2">
-                      <Award className="w-4 h-4 text-[#FF5C28]" />
-                      Section 2: Desired Competencies & Capability Matrix
-                    </h3>
-                    <p className="text-[11px] text-slate-400 mt-0.5">
-                      Define required competencies, expectations, and benchmark proficiency levels.
-                    </p>
-                  </div>
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                  Location / Work Setup <span className="text-red-500">*</span>
+                </label>
+                <div className="relative">
+                  <select
+                    value={location}
+                    onChange={(e) => setLocation(e.target.value)}
+                    className="w-full appearance-none px-3.5 py-2.5 text-xs rounded-xl border border-slate-300 bg-white font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-[#042C51] transition-all cursor-pointer"
+                  >
+                    {LOCATION_OPTIONS.map((loc, idx) => (
+                      <option key={idx} value={loc}>
+                        {loc}
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown className="w-4 h-4 text-slate-400 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                  Date Requested <span className="text-red-500">*</span>
+                </label>
+                <div className="relative">
+                  <input
+                    type="date"
+                    value={dateRequested}
+                    onChange={(e) => setDateRequested(e.target.value)}
+                    className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-300 bg-white font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-[#042C51] transition-all"
+                  />
+                  <Calendar className="w-4 h-4 text-slate-400 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                  Prepared By / Requested By <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={preparedBy}
+                  onChange={(e) => setPreparedBy(e.target.value)}
+                  className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-300 bg-slate-50 font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-[#042C51] transition-all"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* SECTION 2: JOB DESCRIPTION CONTENT & REQUIREMENTS */}
+          <div className="bg-white rounded-2xl border border-slate-200/90 p-5 sm:p-6 shadow-xs space-y-5">
+            {/* Header */}
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div className="space-y-0.5">
+                <div className="flex items-center gap-2">
+                  <FileText className="w-4 h-4 text-[#FF5C28]" />
+                  <h3 className="text-xs sm:text-sm font-black text-[#042C51] tracking-wide uppercase">
+                    SECTION 2: JOB DESCRIPTION CONTENT &amp; REQUIREMENTS
+                  </h3>
+                </div>
+                <p className="text-xs text-slate-500">
+                  Standardized specifications aligned with BPREDS guidelines, SIPOC process mapping, and JE compensable factors.
+                </p>
+              </div>
+
+              <span className="text-xs font-bold text-[#042C51] bg-blue-50 px-3 py-1 rounded-lg border border-blue-200">
+                Specification Matrix
+              </span>
+            </div>
+
+            {/* Row 1: Reports to & Supervisory Responsibility */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                  Reports to <span className="text-red-500">*</span>
+                </label>
+                <div className="relative">
+                  <select
+                    value={reportsTo}
+                    onChange={(e) => setReportsTo(e.target.value)}
+                    className="w-full appearance-none px-3.5 py-2.5 text-xs rounded-xl border border-slate-300 bg-white font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-[#042C51] transition-all cursor-pointer"
+                  >
+                    <option value="Operations Manager">Operations Manager</option>
+                    <option value="Team Lead - Technical Support">Team Lead - Technical Support</option>
+                    <option value="Director of Operations">Director of Operations</option>
+                    <option value="Service Delivery Manager">Service Delivery Manager</option>
+                    <option value="Senior QA Lead">Senior QA Lead</option>
+                  </select>
+                  <ChevronDown className="w-4 h-4 text-slate-400 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                </div>
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="block text-xs font-bold text-slate-700">
+                    Supervisory Responsibility <span className="text-red-500">*</span>
+                  </label>
+                  <span className="text-[10px] font-bold text-slate-500">Aligned with JE compensable factor</span>
+                </div>
+                <div className="flex rounded-xl border border-slate-300 overflow-hidden bg-white h-[38px]">
                   <button
                     type="button"
-                    onClick={handleAddCompetencyRow}
-                    className="px-3 py-1.5 bg-[#042C51] hover:bg-[#063866] text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
+                    onClick={() => setIsSupervisory(true)}
+                    className={`flex-1 flex items-center justify-center text-xs font-bold transition-all cursor-pointer ${
+                      isSupervisory ? "bg-[#042C51] text-white" : "bg-white text-slate-700 hover:bg-slate-50"
+                    }`}
                   >
-                    <Plus className="w-3.5 h-3.5 text-[#FF5C28]" />
-                    <span>Add Competency Row</span>
+                    Yes (Supervisory)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setIsSupervisory(false)}
+                    className={`flex-1 flex items-center justify-center text-xs font-bold transition-all cursor-pointer ${
+                      !isSupervisory ? "bg-[#042C51] text-white" : "bg-white text-slate-700 hover:bg-slate-50"
+                    }`}
+                  >
+                    No (Individual Contributor)
                   </button>
                 </div>
+              </div>
+            </div>
 
-                {/* Table Container */}
-                <div className="overflow-x-auto border border-slate-200 rounded-xl">
-                  <table className="w-full text-left border-collapse min-w-[650px]">
-                    <thead>
-                      <tr className="bg-slate-100/80 text-[#042C51] text-[11px] font-black uppercase tracking-wider border-b border-slate-200">
-                        <th className="p-3 w-1/3">Competency Title</th>
-                        <th className="p-3 w-5/12">Description & Expectation</th>
-                        <th className="p-3 w-1/5">Proficiency Level</th>
-                        <th className="p-3 w-12 text-center">Action</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100 text-xs">
-                      {competencies.map((row) => (
-                        <tr key={row.id} className="hover:bg-slate-50/80 transition-colors">
-                          <td className="p-2.5">
-                            <input
-                              type="text"
-                              placeholder="e.g. B2+ English Fluency"
-                              value={row.title}
-                              onChange={(e) => handleUpdateCompetency(row.id, "title", e.target.value)}
-                              className="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold focus:bg-white focus:border-[#042C51] outline-hidden"
-                            />
-                          </td>
-                          <td className="p-2.5">
-                            <input
-                              type="text"
-                              placeholder="e.g. Ability to articulate solutions clearly via phone..."
-                              value={row.description}
-                              onChange={(e) => handleUpdateCompetency(row.id, "description", e.target.value)}
-                              className="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium focus:bg-white focus:border-[#042C51] outline-hidden"
-                            />
-                          </td>
-                          <td className="p-2.5">
-                            <select
-                              value={row.proficiency}
-                              onChange={(e) =>
-                                handleUpdateCompetency(
-                                  row.id,
-                                  "proficiency",
-                                  e.target.value as "Average" | "Proficient" | "Excellent"
-                                )
-                              }
-                              className={`w-full px-2.5 py-1.5 border rounded-lg text-xs font-bold outline-hidden cursor-pointer ${
-                                row.proficiency === "Excellent"
-                                  ? "bg-emerald-50 text-emerald-800 border-emerald-200"
-                                  : row.proficiency === "Proficient"
-                                  ? "bg-blue-50 text-blue-800 border-blue-200"
-                                  : "bg-slate-50 text-slate-700 border-slate-200"
-                              }`}
-                            >
-                              <option value="Average">Average</option>
-                              <option value="Proficient">Proficient</option>
-                              <option value="Excellent">Excellent</option>
-                            </select>
-                          </td>
-                          <td className="p-2.5 text-center">
-                            <button
-                              type="button"
-                              onClick={() => handleDeleteCompetencyRow(row.id)}
-                              className="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all cursor-pointer"
-                              title="Delete row"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
+            {/* Position Overview with Rich Editor Toolbar */}
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between">
+                <label className="block text-xs font-bold text-slate-700">
+                  Position Overview <span className="text-red-500">*</span>
+                </label>
+                <span className="text-[10px] font-medium text-slate-500">
+                  Standardized description • Use approved 3-letter account codes (e.g. YDL, CDC, CDN, USV)
+                </span>
+              </div>
+              <div className="border border-slate-300 rounded-xl overflow-hidden bg-white focus-within:border-[#042C51] focus-within:ring-2 focus-within:ring-blue-500/20 transition-all">
+                <EditorToolbar />
+                <textarea
+                  rows={3}
+                  value={positionOverview}
+                  onChange={(e) => setPositionOverview(e.target.value)}
+                  placeholder="Describe the standardized position purpose using approved account codes (e.g. YDL, CDC, CDN, USV per BPREDS master guidelines)."
+                  className="w-full p-3 text-xs text-slate-800 placeholder:text-slate-400 bg-transparent focus:outline-none resize-y leading-relaxed font-sans"
+                />
+              </div>
+            </div>
 
-                      {competencies.length === 0 && (
-                        <tr>
-                          <td colSpan={4} className="p-6 text-center text-slate-400 text-xs italic">
-                            No competencies defined. Click "Add Competency Row" above to specify required skills.
-                          </td>
-                        </tr>
-                      )}
-                    </tbody>
-                  </table>
+            {/* Duties and Responsibilities with Rich Editor Toolbar */}
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between">
+                <label className="block text-xs font-bold text-slate-700">
+                  Duties and Responsibilities <span className="text-red-500">*</span>
+                </label>
+                <span className="text-[10px] font-medium text-slate-500">
+                  Derived from the account&apos;s MOP, which in turn should come from the SIPOC / process mapping
+                </span>
+              </div>
+              <div className="border border-slate-300 rounded-xl overflow-hidden bg-white focus-within:border-[#042C51] focus-within:ring-2 focus-within:ring-blue-500/20 transition-all">
+                <EditorToolbar />
+                <textarea
+                  rows={4}
+                  value={responsibilities}
+                  onChange={(e) => setResponsibilities(e.target.value)}
+                  placeholder="Enter key duties and responsibilities derived from the account's MOP / SIPOC process mapping..."
+                  className="w-full p-3 text-xs text-slate-800 placeholder:text-slate-400 bg-transparent focus:outline-none resize-y leading-relaxed font-sans"
+                />
+              </div>
+            </div>
+
+            {/* Qualifications & Characteristics with Rich Editor Toolbar */}
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between">
+                <label className="block text-xs font-bold text-slate-700">
+                  Qualifications and Characteristics <span className="text-red-500">*</span>
+                </label>
+                <span className="text-[10px] font-medium text-slate-500">
+                  Behavioral / soft-skill competencies identified by PE based on actual process requirements
+                </span>
+              </div>
+              <div className="border border-slate-300 rounded-xl overflow-hidden bg-white focus-within:border-[#042C51] focus-within:ring-2 focus-within:ring-blue-500/20 transition-all">
+                <EditorToolbar />
+                <textarea
+                  rows={3}
+                  value={qualifications}
+                  onChange={(e) => setQualifications(e.target.value)}
+                  placeholder="Enter behavioral and soft-skill competencies identified by PE based on actual process requirements."
+                  className="w-full p-3 text-xs text-slate-800 placeholder:text-slate-400 bg-transparent focus:outline-none resize-y leading-relaxed font-sans"
+                />
+              </div>
+            </div>
+
+            {/* Preferred Personality Type */}
+            <div className="space-y-1.5">
+              <label className="block text-xs font-bold text-slate-700">
+                Preferred Personality Profile <span className="text-red-500">*</span>
+              </label>
+              <div className="relative">
+                <select
+                  value={targetPersonality}
+                  onChange={(e) => setTargetPersonality(e.target.value)}
+                  className="w-full appearance-none px-3.5 py-2.5 text-xs rounded-xl border border-slate-300 bg-white font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-[#042C51] transition-all cursor-pointer"
+                >
+                  <option value="">Select personality types</option>
+                  {PERSONALITY_OPTIONS.map((p, idx) => (
+                    <option key={idx} value={p}>
+                      {p}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown className="w-4 h-4 text-slate-400 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              </div>
+            </div>
+
+            {/* IQ FACTOR 1: EDUCATION (TEXT AREA) */}
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between">
+                <label className="block text-xs font-bold text-slate-700">
+                  Education <span className="text-red-500">*</span>
+                </label>
+                <span className="text-[10px] font-medium text-slate-500">
+                  Specify minimum required or accepted educational attainment levels (IQ Factor 1)
+                </span>
+              </div>
+              <div className="border border-slate-300 rounded-xl overflow-hidden bg-white focus-within:border-[#042C51] focus-within:ring-2 focus-within:ring-blue-500/20 transition-all">
+                <EditorToolbar />
+                <textarea
+                  rows={3}
+                  value={education}
+                  onChange={(e) => setEducation(e.target.value)}
+                  placeholder="Enter minimum required or accepted educational attainment levels..."
+                  className="w-full p-3 text-xs text-slate-800 placeholder:text-slate-400 bg-transparent focus:outline-none resize-y leading-relaxed font-sans"
+                />
+              </div>
+            </div>
+
+            {/* IQ FACTOR 2: EXPERIENCE (TEXT AREA) */}
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between">
+                <label className="block text-xs font-bold text-slate-700">
+                  Experience <span className="text-red-500">*</span>
+                </label>
+                <span className="text-[10px] font-medium text-slate-500">
+                  Specify required years of operational experience, domain background, or prior expertise (IQ Factor 2)
+                </span>
+              </div>
+              <div className="border border-slate-300 rounded-xl overflow-hidden bg-white focus-within:border-[#042C51] focus-within:ring-2 focus-within:ring-blue-500/20 transition-all">
+                <EditorToolbar />
+                <textarea
+                  rows={3}
+                  value={experience}
+                  onChange={(e) => setExperience(e.target.value)}
+                  placeholder="Enter required years of operational experience, domain background, or prior expertise..."
+                  className="w-full p-3 text-xs text-slate-800 placeholder:text-slate-400 bg-transparent focus:outline-none resize-y leading-relaxed font-sans"
+                />
+              </div>
+            </div>
+
+            {/* CERTIFICATIONS AND AFFILIATIONS (TEXT AREA) */}
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between">
+                <label className="block text-xs font-bold text-slate-700">
+                  Certifications and Affiliations
+                </label>
+                <span className="text-[10px] font-medium text-slate-500">
+                  Specify required or preferred industry certifications, credentials, licenses, or affiliations
+                </span>
+              </div>
+              <div className="border border-slate-300 rounded-xl overflow-hidden bg-white focus-within:border-[#042C51] focus-within:ring-2 focus-within:ring-blue-500/20 transition-all">
+                <EditorToolbar />
+                <textarea
+                  rows={3}
+                  value={certificationsAndAffiliations}
+                  onChange={(e) => setCertificationsAndAffiliations(e.target.value)}
+                  placeholder="Enter required or preferred industry certifications, credentials, licenses, or affiliations..."
+                  className="w-full p-3 text-xs text-slate-800 placeholder:text-slate-400 bg-transparent focus:outline-none resize-y leading-relaxed font-sans"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* SECTION 3: DESIRED TECHNICAL COMPETENCIES & CAPABILITY MATRIX */}
+          <div className="bg-white rounded-2xl border border-slate-200/90 p-5 sm:p-6 shadow-xs space-y-4">
+            {/* Header */}
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div className="space-y-0.5">
+                <div className="flex items-center gap-2">
+                  <Award className="w-4 h-4 text-[#FF5C28]" />
+                  <h3 className="text-xs sm:text-sm font-black text-[#042C51] tracking-wide uppercase">
+                    SECTION 3: DESIRED TECHNICAL COMPETENCIES &amp; CAPABILITY MATRIX
+                  </h3>
                 </div>
+                <p className="text-xs text-slate-500">
+                  Technical / hard-skill requirements derived from the MOP, including system / CRM proficiency where applicable (IQ Factor 3).
+                </p>
               </div>
 
-              {/* ==================== 5. SECTION 3: JOB DESCRIPTION CONTENT ==================== */}
-              <div className="bg-white p-5 rounded-2xl border border-[#E6ECF2] shadow-xs space-y-4">
-                <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                  <h3 className="text-xs font-black text-[#042C51] uppercase tracking-wider flex items-center gap-2">
-                    <FileText className="w-4 h-4 text-[#FF5C28]" />
-                    Section 3: Job Description Content & Specifications
-                  </h3>
-                  <span className="text-[10px] font-bold text-slate-400">Reporting & Content</span>
+              <span className="px-2.5 py-0.5 rounded-lg text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200">
+                IQ Factor 3
+              </span>
+            </div>
+
+            {/* Table & Matrix */}
+            <div className="border border-slate-300 rounded-xl overflow-hidden bg-white">
+              {/* Header Row */}
+              <div className="border-b border-slate-200 bg-white grid grid-cols-12 py-3 px-4 text-xs font-black text-[#042C51] tracking-wide uppercase items-center">
+                <div className="col-span-6">COMPETENCY FOR THIS POSITION</div>
+                <div className="col-span-2 text-center">AVERAGE</div>
+                <div className="col-span-2 text-center">PROFICIENT</div>
+                <div className="col-span-2 text-center">EXCELLENT</div>
+              </div>
+
+              {/* Rows or Empty State */}
+              {competencies.length === 0 ? (
+                <div className="py-12 text-center text-xs font-medium text-slate-500 bg-white">
+                  No competencies added yet.
                 </div>
+              ) : (
+                <div className="divide-y divide-slate-100 bg-white">
+                  {competencies.map((comp) => (
+                    <div key={comp.id} className="grid grid-cols-12 p-3 px-4 items-center gap-3 hover:bg-slate-50/50 transition-colors">
+                      {/* Left: Input / Description */}
+                      <div className="col-span-6">
+                        <textarea
+                          rows={2}
+                          value={comp.description || comp.title}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            handleUpdateCompetency(comp.id, "description", val);
+                            handleUpdateCompetency(comp.id, "title", val.split(".")[0] || "Competency");
+                          }}
+                          placeholder="Describe this competency..."
+                          className="w-full p-2.5 text-xs rounded-xl border border-slate-200 bg-slate-50/80 text-slate-800 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-1 focus:ring-[#042C51] transition-all resize-none"
+                        />
+                      </div>
 
-                {/* Reporting Line & Supervisory Toggle */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-slate-50/80 p-4 rounded-xl border border-slate-200">
-                  {/* Reports To */}
-                  <div>
-                    <label className="block text-xs font-bold text-[#042C51] mb-1">
-                      Reports To (Direct Reporting Line)
-                    </label>
-                    <select
-                      value={reportsTo}
-                      onChange={(e) => setReportsTo(e.target.value)}
-                      className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-[#042C51] focus:border-[#042C51] outline-hidden cursor-pointer"
-                    >
-                      <option value="Team Supervisor">Team Supervisor</option>
-                      <option value="Operations Manager">Operations Manager</option>
-                      <option value="Senior Operations Manager">Senior Operations Manager</option>
-                      <option value="Department Head">Department Head</option>
-                      <option value="HR Manager">HR Manager</option>
-                    </select>
-                  </div>
-
-                  {/* Supervisory Switch Toggle */}
-                  <div>
-                    <label className="block text-xs font-bold text-[#042C51] mb-1">
-                      Supervisory Role Responsibilities
-                    </label>
-                    <div className="flex items-center gap-2 mt-1">
-                      <div className="inline-flex p-1 bg-slate-200/70 rounded-xl border border-slate-300 w-full sm:w-48">
+                      {/* Radio 1: AVERAGE */}
+                      <div className="col-span-2 flex justify-center">
                         <button
                           type="button"
-                          onClick={() => setIsSupervisory(false)}
-                          className={`flex-1 py-1.5 text-xs font-black rounded-lg transition-all cursor-pointer text-center ${
-                            !isSupervisory
-                              ? "bg-[#042C51] text-white shadow-xs"
-                              : "text-slate-600 hover:text-slate-900"
-                          }`}
+                          onClick={() => handleUpdateCompetency(comp.id, "proficiency", "Average")}
+                          className="p-1 cursor-pointer"
                         >
-                          No (IC)
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setIsSupervisory(true)}
-                          className={`flex-1 py-1.5 text-xs font-black rounded-lg transition-all cursor-pointer text-center ${
-                            isSupervisory
-                              ? "bg-[#FF5C28] text-white shadow-xs"
-                              : "text-slate-600 hover:text-slate-900"
-                          }`}
-                        >
-                          Yes (Supervisor)
+                          <div
+                            className={`w-4 h-4 rounded-full border flex items-center justify-center transition-all ${
+                              comp.proficiency === "Average"
+                                ? "border-[#042C51] ring-2 ring-blue-500/20"
+                                : "border-slate-400 hover:border-slate-600"
+                            }`}
+                          >
+                            {comp.proficiency === "Average" && (
+                              <div className="w-2 h-2 rounded-full bg-[#042C51]" />
+                            )}
+                          </div>
                         </button>
                       </div>
-                      <span className="text-xs text-slate-500 font-medium">
-                        {isSupervisory ? "Manages team members" : "Individual Contributor"}
-                      </span>
-                    </div>
-                  </div>
-                </div>
 
-                {/* Position Overview (Rich Text Editor Mock) */}
-                <div>
-                  <div className="flex items-center justify-between mb-1">
-                    <label className="text-xs font-bold text-[#042C51]">Position Overview</label>
-                    <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-lg border border-slate-200 text-[#042C51]">
-                      <button type="button" className="p-1 hover:bg-slate-200 rounded text-slate-700" title="Bold">
-                        <Bold className="w-3 h-3" />
-                      </button>
-                      <button type="button" className="p-1 hover:bg-slate-200 rounded text-slate-700" title="Italic">
-                        <Italic className="w-3 h-3" />
-                      </button>
-                      <button type="button" className="p-1 hover:bg-slate-200 rounded text-slate-700" title="Bullet List">
-                        <List className="w-3 h-3" />
-                      </button>
-                      <button type="button" className="p-1 hover:bg-slate-200 rounded text-slate-700" title="Numbered List">
-                        <ListOrdered className="w-3 h-3" />
-                      </button>
-                    </div>
-                  </div>
-                  <textarea
-                    rows={3}
-                    placeholder="Provide standard summary of overall position purpose and objective..."
-                    value={positionOverview}
-                    onChange={(e) => setPositionOverview(e.target.value)}
-                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:bg-white focus:border-[#042C51] outline-hidden leading-relaxed resize-y"
-                  />
-                </div>
-
-                {/* Duties & Responsibilities (Rich Text Editor Mock) */}
-                <div>
-                  <div className="flex items-center justify-between mb-1">
-                    <label className="text-xs font-bold text-[#042C51]">Duties & Responsibilities</label>
-                    <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-lg border border-slate-200 text-[#042C51]">
-                      <button type="button" className="p-1 hover:bg-slate-200 rounded text-slate-700" title="Bold">
-                        <Bold className="w-3 h-3" />
-                      </button>
-                      <button type="button" className="p-1 hover:bg-slate-200 rounded text-slate-700" title="Italic">
-                        <Italic className="w-3 h-3" />
-                      </button>
-                      <button type="button" className="p-1 hover:bg-slate-200 rounded text-slate-700" title="Bullet List">
-                        <List className="w-3 h-3" />
-                      </button>
-                    </div>
-                  </div>
-                  <textarea
-                    rows={4}
-                    placeholder="Enter key bullet points for responsibilities..."
-                    value={dutiesResponsibilities}
-                    onChange={(e) => setDutiesResponsibilities(e.target.value)}
-                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:bg-white focus:border-[#042C51] outline-hidden leading-relaxed resize-y font-mono"
-                  />
-                </div>
-
-                {/* Qualifications & Characteristics (Rich Text Editor Mock) */}
-                <div>
-                  <div className="flex items-center justify-between mb-1">
-                    <label className="text-xs font-bold text-[#042C51]">Qualifications & Characteristics</label>
-                    <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-lg border border-slate-200 text-[#042C51]">
-                      <button type="button" className="p-1 hover:bg-slate-200 rounded text-slate-700" title="Bold">
-                        <Bold className="w-3 h-3" />
-                      </button>
-                      <button type="button" className="p-1 hover:bg-slate-200 rounded text-slate-700" title="Italic">
-                        <Italic className="w-3 h-3" />
-                      </button>
-                      <button type="button" className="p-1 hover:bg-slate-200 rounded text-slate-700" title="Bullet List">
-                        <List className="w-3 h-3" />
-                      </button>
-                    </div>
-                  </div>
-                  <textarea
-                    rows={4}
-                    placeholder="Enter required experience, education, and soft skill qualifications..."
-                    value={qualificationsCharacteristics}
-                    onChange={(e) => setQualificationsCharacteristics(e.target.value)}
-                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:bg-white focus:border-[#042C51] outline-hidden leading-relaxed resize-y font-mono"
-                  />
-                </div>
-
-                {/* Preferred Personality Type (MBTI Selection Pills) */}
-                <div>
-                  <label className="block text-xs font-bold text-[#042C51] mb-1.5 flex items-center justify-between">
-                    <span>Preferred Personality Type (MBTI Multi-Select)</span>
-                    <span className="text-[10px] text-slate-400 font-normal">
-                      Selected: {selectedPersonalityTypes.join(", ") || "None"}
-                    </span>
-                  </label>
-                  <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl flex flex-wrap gap-1.5">
-                    {ALL_MBTI_TYPES.map((mbti) => {
-                      const isSelected = selectedPersonalityTypes.includes(mbti);
-                      return (
+                      {/* Radio 2: PROFICIENT */}
+                      <div className="col-span-2 flex justify-center">
                         <button
-                          key={mbti}
                           type="button"
-                          onClick={() => handleTogglePersonality(mbti)}
-                          className={`px-3 py-1 rounded-lg text-xs font-black transition-all cursor-pointer ${
-                            isSelected
-                              ? "bg-[#042C51] text-white shadow-xs border border-[#042C51]"
-                              : "bg-white text-slate-600 border border-slate-200 hover:border-[#042C51]/40 hover:bg-slate-100"
-                          }`}
+                          onClick={() => handleUpdateCompetency(comp.id, "proficiency", "Proficient")}
+                          className="p-1 cursor-pointer"
                         >
-                          {mbti}
+                          <div
+                            className={`w-4 h-4 rounded-full border flex items-center justify-center transition-all ${
+                              comp.proficiency === "Proficient"
+                                ? "border-[#042C51] ring-2 ring-blue-500/20"
+                                : "border-slate-400 hover:border-slate-600"
+                            }`}
+                          >
+                            {comp.proficiency === "Proficient" && (
+                              <div className="w-2 h-2 rounded-full bg-[#042C51]" />
+                            )}
+                          </div>
                         </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
+                      </div>
 
-              {/* MODAL FOOTER */}
-              <div className="pt-4 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3">
-                <p className="text-[11px] text-slate-400">
-                  Clicking <strong>Save Job Description</strong> registers the specification and queues it for operational recruitment intake.
-                </p>
+                      {/* Radio 3: EXCELLENT & Delete button */}
+                      <div className="col-span-2 flex items-center justify-center gap-3">
+                        <button
+                          type="button"
+                          onClick={() => handleUpdateCompetency(comp.id, "proficiency", "Excellent")}
+                          className="p-1 cursor-pointer"
+                        >
+                          <div
+                            className={`w-4 h-4 rounded-full border flex items-center justify-center transition-all ${
+                              comp.proficiency === "Excellent"
+                                ? "border-[#042C51] ring-2 ring-blue-500/20"
+                                : "border-slate-400 hover:border-slate-600"
+                            }`}
+                          >
+                            {comp.proficiency === "Excellent" && (
+                              <div className="w-2 h-2 rounded-full bg-[#042C51]" />
+                            )}
+                          </div>
+                        </button>
 
-                <div className="flex items-center gap-2 self-end sm:self-auto">
-                  <button
-                    type="button"
-                    onClick={handleReset}
-                    className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-all cursor-pointer"
-                  >
-                    Reset Form
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={isSubmitting}
-                    className="px-5 py-2 bg-[#FF5C28] hover:bg-[#e04f20] text-white rounded-xl text-xs font-bold transition-all shadow-md cursor-pointer flex items-center gap-1.5 disabled:opacity-50"
-                  >
-                    <Save className="w-4 h-4" />
-                    <span>{isSubmitting ? "Saving Record..." : "Save Job Description"}</span>
-                  </button>
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveCompetency(comp.id)}
+                          className="p-2 rounded-lg bg-red-50 text-red-500 border border-red-200 hover:bg-red-100 transition-colors shadow-2xs cursor-pointer ml-auto"
+                          title="Delete competency"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              </div>
-            </form>
+              )}
+            </div>
+
+            {/* Add Competency Button */}
+            <button
+              type="button"
+              onClick={handleAddCompetency}
+              className="w-full py-2.5 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-[#042C51] text-xs font-bold transition-all flex items-center justify-center gap-1.5 shadow-2xs cursor-pointer"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Add Competency</span>
+            </button>
           </div>
-        </motion.div>
-      </div>
-    </AnimatePresence>
+        </div>
+      </motion.div>
+    </div>
   );
-}
+};
+
+export default AddJobDescriptionModal;

@@ -1300,7 +1300,7 @@ export default function SuperAdminDashboard({
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-[#E6ECF2] space-y-4"
+              className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4"
             >
               <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                 <div className="flex items-center gap-2">

@@ -1,6 +1,6 @@
 {
-  "name": "SiBS HRIS",
-  "description": "SiBS Enterprise HRIS with Workforce Hiring, Employee Portal, Candidate Experience, and polished non-blocking Birthday Easter Egg celebration.",
+  "name": "Remix SiBS HRIS",
+  "description": "Workforce Hiring module for monitoring workforce coverage, recruitment demand, hiring progress, and account-level workforce plans.",
   "requestFramePermissions": [],
   "majorCapabilities": [
     "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"

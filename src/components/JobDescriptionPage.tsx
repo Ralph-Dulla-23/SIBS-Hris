@@ -2,6 +2,7 @@ import React, { useState, useMemo } from "react";
 import CentralizedFilters from "./CentralizedFilters";
 import AddJobDescriptionModal from "./AddJobDescriptionModal";
 import JobDescriptionPreviewModal from "./JobDescriptionPreviewModal";
+import DeleteJobDescriptionModal from "./DeleteJobDescriptionModal";
 import {
   FileText,
   Plus,
@@ -28,7 +29,12 @@ import {
   History,
   ShieldCheck,
   Award,
-  Users
+  Users,
+  Archive,
+  ArchiveRestore,
+  RotateCcw,
+  FolderArchive,
+  Trash2
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 
@@ -49,6 +55,22 @@ export interface RevisionLog {
   remarks: string;
 }
 
+export interface CompensableFactorRecord {
+  id: number;
+  factorName: string;
+  category: "IQ" | "EQ" | "CONDITIONS";
+  criteria: string;
+  weightOrPoints: number;
+  key?: string;
+  assessment?: string;
+  confidence?: string;
+  summary?: string;
+  evidence?: { sourceField: string; text: string }[];
+  missingContext?: string[];
+  requiresUserInput?: boolean;
+  reviewed?: boolean;
+}
+
 export interface JobDescriptionRecord {
   id: string;
   documentTitle: string;
@@ -61,9 +83,18 @@ export interface JobDescriptionRecord {
   dateRequested: string;
   versionNo: string;
   competencies: string[];
+  educationRequirements?: string[];
+  experienceRequirements?: string[];
+  certificationsAndAffiliations?: string[];
+  location?: string;
+  compensableFactors?: CompensableFactorRecord[];
   responsibilities: string[];
   targetPersonality: string;
   revisionHistory: RevisionLog[];
+  isArchived?: boolean;
+  archivedAt?: string;
+  archivedBy?: string;
+  archiveReason?: string;
 }
 
 interface JobDescriptionPageProps {
@@ -229,6 +260,37 @@ const INITIAL_JOB_DESCRIPTIONS: JobDescriptionRecord[] = [
         remarks: "Approved final version for all global operations accounts."
       }
     ]
+  },
+  {
+    id: "JD-2026-007",
+    documentTitle: "JD_Legacy_Call_Center_Agent_v1.0.pdf",
+    roleTitle: "Legacy Inbound Call Center Agent",
+    department: "Operations",
+    account: "Sprint Telecom",
+    linkedHiringNeed: "REQ-2025-012 (Legacy Account)",
+    supervisoryLevel: "Individual Contributor",
+    status: "Existing",
+    dateRequested: "2025-11-14",
+    versionNo: "v1.0",
+    competencies: ["Inbound Voice Handling", "CRM Call Tagging", "Active Listening"],
+    responsibilities: [
+      "Handle general customer inquiries for mobile plans and billing statements.",
+      "Log call details in legacy CRM system."
+    ],
+    targetPersonality: "Patient, customer-centric",
+    revisionHistory: [
+      {
+        id: "REV-ARCHIVE-01",
+        date: "2026-05-10",
+        author: "Alena Batacan (HR Admin)",
+        version: "v1.0",
+        remarks: "Archived: Role consolidated into Customer Support Specialist standard spec (JD-2026-001)."
+      }
+    ],
+    isArchived: true,
+    archivedAt: "2026-05-10",
+    archivedBy: "Alena Batacan (HR Admin)",
+    archiveReason: "Role consolidated into Customer Support Specialist standard spec (JD-2026-001)"
   }
 ];
 
@@ -247,6 +309,11 @@ export default function JobDescriptionPage({ onSwitchModule }: JobDescriptionPag
   const [viewingJD, setViewingJD] = useState<JobDescriptionRecord | null>(null);
   const [revisingJD, setRevisingJD] = useState<JobDescriptionRecord | null>(null);
   const [editingJD, setEditingJD] = useState<JobDescriptionRecord | null>(null);
+  const [archiveTargetJD, setArchiveTargetJD] = useState<JobDescriptionRecord | null>(null);
+  const [archiveReason, setArchiveReason] = useState<string>("Position deprecated / no longer in active hiring");
+  const [customArchiveReason, setCustomArchiveReason] = useState<string>("");
+  const [restoreTargetJD, setRestoreTargetJD] = useState<JobDescriptionRecord | null>(null);
+  const [deleteTargetJD, setDeleteTargetJD] = useState<JobDescriptionRecord | null>(null);
 
   // Status Modal (Feedback Overlay) State
   const [statusModal, setStatusModal] = useState<{
@@ -283,26 +350,37 @@ export default function JobDescriptionPage({ onSwitchModule }: JobDescriptionPag
   const [updatedCompetenciesText, setUpdatedCompetenciesText] = useState("");
   const [updatedResponsibilitiesText, setUpdatedResponsibilitiesText] = useState("");
 
-  // Stat Counters
+  // Stat Counters (Active vs Archived)
   const stats = useMemo(() => {
-    const total = jobDescriptions.length;
-    const existing = jobDescriptions.filter((j) => j.status === "Existing" || j.status === "Approved").length;
-    const revision = jobDescriptions.filter((j) => j.status === "For Revision").length;
-    const newJd = jobDescriptions.filter((j) => j.status === "New Job Description" || j.status === "For Approval").length;
-    return { total, existing, revision, newJd };
+    const activeJDs = jobDescriptions.filter((j) => !j.isArchived);
+    const archivedJDs = jobDescriptions.filter((j) => j.isArchived);
+    const total = activeJDs.length;
+    const existing = activeJDs.filter((j) => j.status === "Existing" || j.status === "Approved").length;
+    const revision = activeJDs.filter((j) => j.status === "For Revision").length;
+    const newJd = activeJDs.filter((j) => j.status === "New Job Description" || j.status === "For Approval").length;
+    const forApproval = activeJDs.filter((j) => j.status === "For Approval").length;
+    const rejected = activeJDs.filter((j) => j.status === "Rejected").length;
+    const archived = archivedJDs.length;
+    return { total, existing, revision, newJd, forApproval, rejected, archived };
   }, [jobDescriptions]);
 
   // Filtered Job Descriptions List
   const filteredJDs = useMemo(() => {
     return jobDescriptions.filter((jd) => {
-      // Tab Status filter
-      if (selectedStatusTab !== "All") {
-        if (selectedStatusTab === "Existing") {
-          if (jd.status !== "Existing" && jd.status !== "Approved") return false;
-        } else if (selectedStatusTab === "New Job Description") {
-          if (jd.status !== "New Job Description" && jd.status !== "For Approval") return false;
-        } else if (jd.status !== selectedStatusTab) {
-          return false;
+      // Tab Status & Archive filter
+      if (selectedStatusTab === "Archived") {
+        if (!jd.isArchived) return false;
+      } else {
+        if (jd.isArchived) return false;
+
+        if (selectedStatusTab !== "All") {
+          if (selectedStatusTab === "Existing") {
+            if (jd.status !== "Existing" && jd.status !== "Approved") return false;
+          } else if (selectedStatusTab === "New Job Description") {
+            if (jd.status !== "New Job Description" && jd.status !== "For Approval") return false;
+          } else if (jd.status !== selectedStatusTab) {
+            return false;
+          }
         }
       }
 
@@ -312,7 +390,8 @@ export default function JobDescriptionPage({ onSwitchModule }: JobDescriptionPag
         jd.documentTitle.toLowerCase().includes(searchTerm.toLowerCase()) ||
         jd.department.toLowerCase().includes(searchTerm.toLowerCase()) ||
         jd.account.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        jd.linkedHiringNeed.toLowerCase().includes(searchTerm.toLowerCase());
+        jd.linkedHiringNeed.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (jd.archiveReason && jd.archiveReason.toLowerCase().includes(searchTerm.toLowerCase()));
 
       // Dropdown Selects
       const matchesDept = departmentFilter === "All Departments" || jd.department === departmentFilter;
@@ -437,8 +516,118 @@ export default function JobDescriptionPage({ onSwitchModule }: JobDescriptionPag
     );
   };
 
+  // Handle Archive Confirmation
+  const handleArchiveConfirm = () => {
+    if (!archiveTargetJD) return;
+    const finalReason =
+      archiveReason === "Other / Custom Reason"
+        ? customArchiveReason.trim() || "Archived by user"
+        : archiveReason;
+    const today = new Date().toISOString().split("T")[0];
+
+    const archiveLog: RevisionLog = {
+      id: `REV-ARCH-${Math.floor(100 + Math.random() * 900)}`,
+      date: today,
+      author: "HR Admin / Super Admin",
+      version: archiveTargetJD.versionNo,
+      remarks: `Archived: ${finalReason}`
+    };
+
+    const updatedJD: JobDescriptionRecord = {
+      ...archiveTargetJD,
+      isArchived: true,
+      archivedAt: today,
+      archivedBy: "HR Admin / Super Admin",
+      archiveReason: finalReason,
+      revisionHistory: [archiveLog, ...archiveTargetJD.revisionHistory]
+    };
+
+    setJobDescriptions((prev) => prev.map((j) => (j.id === archiveTargetJD.id ? updatedJD : j)));
+
+    if (viewingJD && viewingJD.id === archiveTargetJD.id) {
+      setViewingJD(updatedJD);
+    }
+
+    setArchiveTargetJD(null);
+    setCustomArchiveReason("");
+
+    triggerStatusModal(
+      "success",
+      "Job Description Archived",
+      `"${updatedJD.roleTitle}" (${updatedJD.id}) was moved to the Archived repository.`
+    );
+  };
+
+  // Handle Restore Confirmation
+  const handleRestoreConfirm = (target?: JobDescriptionRecord) => {
+    const jdToRestore = target || restoreTargetJD;
+    if (!jdToRestore) return;
+    const today = new Date().toISOString().split("T")[0];
+
+    const restoreLog: RevisionLog = {
+      id: `REV-REST-${Math.floor(100 + Math.random() * 900)}`,
+      date: today,
+      author: "HR Admin / Super Admin",
+      version: jdToRestore.versionNo,
+      remarks: "Restored from Archive repository to active status."
+    };
+
+    const updatedJD: JobDescriptionRecord = {
+      ...jdToRestore,
+      isArchived: false,
+      archivedAt: undefined,
+      archivedBy: undefined,
+      archiveReason: undefined,
+      revisionHistory: [restoreLog, ...jdToRestore.revisionHistory]
+    };
+
+    setJobDescriptions((prev) => prev.map((j) => (j.id === jdToRestore.id ? updatedJD : j)));
+
+    if (viewingJD && viewingJD.id === jdToRestore.id) {
+      setViewingJD(updatedJD);
+    }
+
+    setRestoreTargetJD(null);
+
+    triggerStatusModal(
+      "success",
+      "Job Description Restored",
+      `"${updatedJD.roleTitle}" (${updatedJD.id}) has been restored to active job descriptions.`
+    );
+  };
+
+  // Handle Delete Confirmation
+  const handleDeleteConfirm = (target?: JobDescriptionRecord) => {
+    const jdToDelete = target || deleteTargetJD;
+    if (!jdToDelete) return;
+
+    setJobDescriptions((prev) => prev.filter((j) => j.id !== jdToDelete.id));
+
+    if (viewingJD && viewingJD.id === jdToDelete.id) {
+      setViewingJD(null);
+    }
+
+    setDeleteTargetJD(null);
+
+    triggerStatusModal(
+      "info",
+      "Job Description Permanently Deleted",
+      `"${jdToDelete.roleTitle}" (${jdToDelete.id}) was permanently deleted from the database and unlinked from associated requisitions.`
+    );
+  };
+
   // Status Badge Styling Helper
-  const renderStatusBadge = (status: JDStatus) => {
+  const renderStatusBadge = (jd: JobDescriptionRecord) => {
+    if (jd.isArchived) {
+      return (
+        <span className="bg-slate-100 text-slate-700 text-[10px] font-bold px-2.5 py-1 rounded-full inline-flex items-center gap-1 border border-slate-200">
+          <Archive className="w-3 h-3 text-slate-500" />
+          Archived
+        </span>
+      );
+    }
+
+    const status = jd.status;
     switch (status) {
       case "Approved":
       case "Existing":
@@ -517,12 +706,19 @@ export default function JobDescriptionPage({ onSwitchModule }: JobDescriptionPag
       </div>
 
       {/* ==================== 2. JOB DESCRIPTION SUMMARY (STAT CARDS) ==================== */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
         {/* Stat Card 1: Total JD */}
-        <div className="bg-white p-5 rounded-2xl border border-[#E6ECF2] shadow-sm hover:border-[#042C51]/30 transition-all">
+        <div 
+          onClick={() => setSelectedStatusTab("All")}
+          className={`bg-white p-5 rounded-2xl border transition-all cursor-pointer ${
+            selectedStatusTab === "All"
+              ? "border-[#042C51] ring-2 ring-[#042C51]/10 shadow-md"
+              : "border-[#E6ECF2] shadow-sm hover:border-[#042C51]/30"
+          }`}
+        >
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-black text-[#667085] uppercase tracking-wider">
-              Total JD
+              Total Active
             </span>
             <div className="w-8 h-8 rounded-xl bg-blue-50 text-[#042C51] flex items-center justify-center">
               <ClipboardList className="w-4 h-4" />
@@ -530,16 +726,23 @@ export default function JobDescriptionPage({ onSwitchModule }: JobDescriptionPag
           </div>
           <div className="mt-3 flex items-baseline justify-between">
             <span className="text-2xl font-black text-[#042C51]">{stats.total}</span>
-            <span className="text-[10px] font-bold text-slate-400">All Master JDs</span>
+            <span className="text-[10px] font-bold text-slate-400">Master JDs</span>
           </div>
-          <p className="text-[10px] text-slate-500 mt-1">All job descriptions in database</p>
+          <p className="text-[10px] text-slate-500 mt-1">Active job descriptions</p>
         </div>
 
         {/* Stat Card 2: Existing */}
-        <div className="bg-white p-5 rounded-2xl border border-[#E6ECF2] shadow-sm hover:border-emerald-300 transition-all">
+        <div 
+          onClick={() => setSelectedStatusTab("Existing")}
+          className={`bg-white p-5 rounded-2xl border transition-all cursor-pointer ${
+            selectedStatusTab === "Existing"
+              ? "border-emerald-500 ring-2 ring-emerald-500/10 shadow-md"
+              : "border-[#E6ECF2] shadow-sm hover:border-emerald-300"
+          }`}
+        >
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-black text-[#667085] uppercase tracking-wider">
-              Existing
+              Existing / Ready
             </span>
             <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center">
               <CheckCircle2 className="w-4 h-4" />
@@ -548,14 +751,21 @@ export default function JobDescriptionPage({ onSwitchModule }: JobDescriptionPag
           <div className="mt-3 flex items-baseline justify-between">
             <span className="text-2xl font-black text-[#042C51]">{stats.existing}</span>
             <span className="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded-full">
-              Ready / Approved
+              Ready
             </span>
           </div>
-          <p className="text-[10px] text-slate-500 mt-1">Ready or already available</p>
+          <p className="text-[10px] text-slate-500 mt-1">Ready for hiring campaigns</p>
         </div>
 
         {/* Stat Card 3: For Revision */}
-        <div className="bg-white p-5 rounded-2xl border border-[#E6ECF2] shadow-sm hover:border-amber-300 transition-all">
+        <div 
+          onClick={() => setSelectedStatusTab("For Revision")}
+          className={`bg-white p-5 rounded-2xl border transition-all cursor-pointer ${
+            selectedStatusTab === "For Revision"
+              ? "border-amber-500 ring-2 ring-amber-500/10 shadow-md"
+              : "border-[#E6ECF2] shadow-sm hover:border-amber-300"
+          }`}
+        >
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-black text-[#667085] uppercase tracking-wider">
               For Revision
@@ -567,17 +777,24 @@ export default function JobDescriptionPage({ onSwitchModule }: JobDescriptionPag
           <div className="mt-3 flex items-baseline justify-between">
             <span className="text-2xl font-black text-[#042C51]">{stats.revision}</span>
             <span className="bg-amber-100 text-amber-800 text-[10px] font-bold px-2 py-0.5 rounded-full">
-              Action Required
+              Action Req.
             </span>
           </div>
-          <p className="text-[10px] text-slate-500 mt-1">Needs spec update or remarks</p>
+          <p className="text-[10px] text-slate-500 mt-1">Needs spec update</p>
         </div>
 
         {/* Stat Card 4: New Job Description */}
-        <div className="bg-white p-5 rounded-2xl border border-[#E6ECF2] shadow-sm hover:border-blue-300 transition-all">
+        <div 
+          onClick={() => setSelectedStatusTab("New Job Description")}
+          className={`bg-white p-5 rounded-2xl border transition-all cursor-pointer ${
+            selectedStatusTab === "New Job Description"
+              ? "border-indigo-500 ring-2 ring-indigo-500/10 shadow-md"
+              : "border-[#E6ECF2] shadow-sm hover:border-indigo-300"
+          }`}
+        >
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-black text-[#667085] uppercase tracking-wider">
-              New Job Description
+              New / Intake
             </span>
             <div className="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-700 flex items-center justify-center">
               <FileText className="w-4 h-4" />
@@ -586,10 +803,36 @@ export default function JobDescriptionPage({ onSwitchModule }: JobDescriptionPag
           <div className="mt-3 flex items-baseline justify-between">
             <span className="text-2xl font-black text-[#042C51]">{stats.newJd}</span>
             <span className="bg-blue-100 text-blue-800 text-[10px] font-bold px-2 py-0.5 rounded-full">
-              In Draft / Approval
+              Draft / Approval
             </span>
           </div>
-          <p className="text-[10px] text-slate-500 mt-1">New or unlinked JD intake</p>
+          <p className="text-[10px] text-slate-500 mt-1">New or unlinked intake</p>
+        </div>
+
+        {/* Stat Card 5: Archived */}
+        <div 
+          onClick={() => setSelectedStatusTab("Archived")}
+          className={`bg-white p-5 rounded-2xl border transition-all cursor-pointer ${
+            selectedStatusTab === "Archived"
+              ? "border-slate-800 ring-2 ring-slate-800/10 shadow-md bg-slate-50/50"
+              : "border-[#E6ECF2] shadow-sm hover:border-slate-400"
+          }`}
+        >
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-black text-[#667085] uppercase tracking-wider">
+              Archived JDs
+            </span>
+            <div className="w-8 h-8 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center">
+              <Archive className="w-4 h-4" />
+            </div>
+          </div>
+          <div className="mt-3 flex items-baseline justify-between">
+            <span className="text-2xl font-black text-[#042C51]">{stats.archived}</span>
+            <span className="bg-slate-200 text-slate-700 text-[10px] font-bold px-2 py-0.5 rounded-full">
+              Repository
+            </span>
+          </div>
+          <p className="text-[10px] text-slate-500 mt-1">Deprecated or saved specs</p>
         </div>
       </div>
 
@@ -635,7 +878,8 @@ export default function JobDescriptionPage({ onSwitchModule }: JobDescriptionPag
               "Comcast Support",
               "Internal HR Ops",
               "Aetna Health",
-              "Global WFM"
+              "Global WFM",
+              "Sprint Telecom"
             ]
           },
           {
@@ -652,19 +896,25 @@ export default function JobDescriptionPage({ onSwitchModule }: JobDescriptionPag
         {/* Status Filter Tabs */}
         <div className="flex border-b border-[#E6ECF2] bg-[#F8FAFC] px-4 pt-3 overflow-x-auto">
           {[
-            { key: "All", label: "All JDs", count: jobDescriptions.length },
+            { key: "All", label: "All Active JDs", count: stats.total },
             { key: "Existing", label: "Existing / Ready", count: stats.existing },
             { key: "For Revision", label: "For Revision", count: stats.revision },
             { key: "New Job Description", label: "New Job Description", count: stats.newJd },
             {
               key: "For Approval",
               label: "For Approval",
-              count: jobDescriptions.filter((j) => j.status === "For Approval").length
+              count: stats.forApproval
             },
             {
               key: "Rejected",
               label: "Rejected",
-              count: jobDescriptions.filter((j) => j.status === "Rejected").length
+              count: stats.rejected
+            },
+            {
+              key: "Archived",
+              label: "Archived",
+              count: stats.archived,
+              isArchiveTab: true
             }
           ].map((tab) => (
             <button
@@ -672,15 +922,20 @@ export default function JobDescriptionPage({ onSwitchModule }: JobDescriptionPag
               onClick={() => setSelectedStatusTab(tab.key)}
               className={`px-4 py-3 text-xs font-black uppercase tracking-wider flex items-center gap-2 border-b-2 transition-all cursor-pointer whitespace-nowrap ${
                 selectedStatusTab === tab.key
-                  ? "border-[#FF5C28] text-[#042C51] bg-white rounded-t-xl"
+                  ? tab.isArchiveTab
+                    ? "border-slate-800 text-slate-900 bg-white rounded-t-xl"
+                    : "border-[#FF5C28] text-[#042C51] bg-white rounded-t-xl"
                   : "border-transparent text-slate-500 hover:text-[#042C51]"
               }`}
             >
+              {tab.isArchiveTab && <Archive className="w-3.5 h-3.5 text-slate-500" />}
               <span>{tab.label}</span>
               <span
                 className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
                   selectedStatusTab === tab.key
-                    ? "bg-[#042C51] text-white"
+                    ? tab.isArchiveTab
+                      ? "bg-slate-800 text-white"
+                      : "bg-[#042C51] text-white"
                     : "bg-slate-200 text-slate-600"
                 }`}
               >
@@ -706,14 +961,28 @@ export default function JobDescriptionPage({ onSwitchModule }: JobDescriptionPag
             </thead>
             <tbody className="divide-y divide-[#E6ECF2] font-medium text-[#042C51]">
               {filteredJDs.map((jd) => (
-                <tr key={jd.id} className="hover:bg-slate-50/80 transition-colors">
+                <tr 
+                  key={jd.id} 
+                  className={`hover:bg-slate-50/80 transition-colors ${
+                    jd.isArchived ? "bg-slate-50/40 text-slate-600" : ""
+                  }`}
+                >
                   <td className="py-3.5 px-4">
                     <div className="font-black text-xs text-[#042C51] flex items-center gap-1.5">
-                      <FileText className="w-3.5 h-3.5 text-[#FF5C28]" />
-                      <span>{jd.roleTitle}</span>
+                      {jd.isArchived ? (
+                        <FolderArchive className="w-3.5 h-3.5 text-slate-400" />
+                      ) : (
+                        <FileText className="w-3.5 h-3.5 text-[#FF5C28]" />
+                      )}
+                      <span className={jd.isArchived ? "text-slate-700" : ""}>{jd.roleTitle}</span>
                     </div>
-                    <div className="text-[10px] text-slate-400 font-mono mt-0.5">
-                      {jd.documentTitle}
+                    <div className="text-[10px] text-slate-400 font-mono mt-0.5 flex items-center gap-1.5">
+                      <span>{jd.documentTitle}</span>
+                      {jd.isArchived && (
+                        <span className="text-amber-700 bg-amber-50 px-1.5 py-0.2 rounded text-[9px] font-sans font-bold">
+                          Archived
+                        </span>
+                      )}
                     </div>
                   </td>
                   <td className="py-3.5 px-4">
@@ -728,7 +997,7 @@ export default function JobDescriptionPage({ onSwitchModule }: JobDescriptionPag
                   <td className="py-3.5 px-4 text-slate-600 text-xs font-semibold">
                     {jd.supervisoryLevel}
                   </td>
-                  <td className="py-3.5 px-4">{renderStatusBadge(jd.status)}</td>
+                  <td className="py-3.5 px-4">{renderStatusBadge(jd)}</td>
                   <td className="py-3.5 px-4">
                     <div className="text-xs font-bold text-[#042C51]">{jd.versionNo}</div>
                     <div className="text-[10px] text-slate-400">{jd.dateRequested}</div>
@@ -744,27 +1013,69 @@ export default function JobDescriptionPage({ onSwitchModule }: JobDescriptionPag
                         <span>View</span>
                       </button>
 
-                      <button
-                        onClick={() => {
-                          setRevisingJD(jd);
-                          setUpdatedCompetenciesText(jd.competencies.join(", "));
-                          setUpdatedResponsibilitiesText(jd.responsibilities.join("\n"));
-                        }}
-                        className="px-2.5 py-1.5 bg-amber-50 hover:bg-amber-600 hover:text-white text-amber-800 rounded-lg text-[10px] font-bold transition-all flex items-center gap-1 cursor-pointer"
-                        title="Revise JD"
-                      >
-                        <Edit3 className="w-3 h-3" />
-                        <span>Revise</span>
-                      </button>
+                      {jd.isArchived ? (
+                        <>
+                          <button
+                            onClick={() => setRestoreTargetJD(jd)}
+                            className="px-2.5 py-1.5 bg-white hover:bg-emerald-50/60 text-[#042C51] border border-slate-200 hover:border-emerald-300 rounded-lg text-[10px] font-bold transition-all flex items-center gap-1 cursor-pointer shadow-2xs"
+                            title="Restore to Active"
+                          >
+                            <ArchiveRestore className="w-3.5 h-3.5 text-emerald-600" />
+                            <span className="font-bold text-[#042C51]">Restore</span>
+                          </button>
 
-                      <button
-                        onClick={() => setEditingJD(jd)}
-                        className="px-2.5 py-1.5 bg-blue-50 hover:bg-blue-600 hover:text-white text-blue-800 rounded-lg text-[10px] font-bold transition-all flex items-center gap-1 cursor-pointer"
-                        title="Edit Spec"
-                      >
-                        <RefreshCw className="w-3 h-3" />
-                        <span>Edit</span>
-                      </button>
+                          <button
+                            onClick={() => setDeleteTargetJD(jd)}
+                            className="px-2.5 py-1.5 bg-red-50 hover:bg-red-600 hover:text-white text-red-700 rounded-lg text-[10px] font-bold transition-all flex items-center gap-1 cursor-pointer"
+                            title="Delete Job Description"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                            <span>Delete</span>
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <button
+                            onClick={() => {
+                              setRevisingJD(jd);
+                              setUpdatedCompetenciesText(jd.competencies.join(", "));
+                              setUpdatedResponsibilitiesText(jd.responsibilities.join("\n"));
+                            }}
+                            className="px-2.5 py-1.5 bg-amber-50 hover:bg-amber-600 hover:text-white text-amber-800 rounded-lg text-[10px] font-bold transition-all flex items-center gap-1 cursor-pointer"
+                            title="Revise JD"
+                          >
+                            <Edit3 className="w-3 h-3" />
+                            <span>Revise</span>
+                          </button>
+
+                          <button
+                            onClick={() => setEditingJD(jd)}
+                            className="px-2.5 py-1.5 bg-blue-50 hover:bg-blue-600 hover:text-white text-blue-800 rounded-lg text-[10px] font-bold transition-all flex items-center gap-1 cursor-pointer"
+                            title="Edit Spec"
+                          >
+                            <RefreshCw className="w-3 h-3" />
+                            <span>Edit</span>
+                          </button>
+
+                          <button
+                            onClick={() => setArchiveTargetJD(jd)}
+                            className="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-700 hover:text-white text-slate-600 rounded-lg text-[10px] font-bold transition-all flex items-center gap-1 cursor-pointer"
+                            title="Archive Job Description"
+                          >
+                            <Archive className="w-3 h-3" />
+                            <span>Archive</span>
+                          </button>
+
+                          <button
+                            onClick={() => setDeleteTargetJD(jd)}
+                            className="px-2.5 py-1.5 bg-red-50 hover:bg-red-600 hover:text-white text-red-700 rounded-lg text-[10px] font-bold transition-all flex items-center gap-1 cursor-pointer"
+                            title="Delete Job Description"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                            <span>Delete</span>
+                          </button>
+                        </>
+                      )}
                     </div>
                   </td>
                 </tr>
@@ -778,22 +1089,30 @@ export default function JobDescriptionPage({ onSwitchModule }: JobDescriptionPag
           {filteredJDs.map((jd) => (
             <div
               key={jd.id}
-              className="p-4 rounded-xl border border-[#E6ECF2] bg-white space-y-3 shadow-2xs hover:border-[#FF5C28]/40 transition-all"
+              className={`p-4 rounded-xl border space-y-3 shadow-2xs transition-all ${
+                jd.isArchived 
+                  ? "bg-slate-50 border-slate-200" 
+                  : "bg-white border-[#E6ECF2] hover:border-[#FF5C28]/40"
+              }`}
             >
               <div className="flex items-start justify-between gap-2">
                 <div>
                   <div className="font-black text-xs text-[#042C51] flex items-center gap-1.5">
-                    <FileText className="w-3.5 h-3.5 text-[#FF5C28]" />
+                    {jd.isArchived ? (
+                      <FolderArchive className="w-3.5 h-3.5 text-slate-400" />
+                    ) : (
+                      <FileText className="w-3.5 h-3.5 text-[#FF5C28]" />
+                    )}
                     <span>{jd.roleTitle}</span>
                   </div>
                   <div className="text-[10px] text-slate-400 font-mono mt-0.5">
                     {jd.documentTitle}
                   </div>
                 </div>
-                {renderStatusBadge(jd.status)}
+                {renderStatusBadge(jd)}
               </div>
 
-              <div className="grid grid-cols-2 gap-2 text-[11px] bg-slate-50 p-2.5 rounded-lg border border-slate-100">
+              <div className="grid grid-cols-2 gap-2 text-[11px] bg-white p-2.5 rounded-lg border border-slate-100">
                 <div>
                   <span className="text-slate-400 block text-[9px] uppercase font-bold">Dept & Account</span>
                   <span className="font-bold text-[#042C51]">{jd.department}</span>
@@ -810,7 +1129,13 @@ export default function JobDescriptionPage({ onSwitchModule }: JobDescriptionPag
                 <span className="font-bold text-[#042C51]">Linked Req:</span> {jd.linkedHiringNeed}
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+              {jd.isArchived && jd.archiveReason && (
+                <div className="text-[10px] text-slate-600 bg-amber-50 p-2 rounded-lg border border-amber-100">
+                  <span className="font-bold text-amber-900">Archive Reason:</span> {jd.archiveReason}
+                </div>
+              )}
+
+              <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100 flex-wrap">
                 <button
                   onClick={() => setViewingJD(jd)}
                   className="px-3 py-1.5 bg-slate-100 hover:bg-[#042C51] hover:text-white text-[#042C51] rounded-lg text-xs font-bold cursor-pointer flex items-center gap-1"
@@ -818,17 +1143,53 @@ export default function JobDescriptionPage({ onSwitchModule }: JobDescriptionPag
                   <Eye className="w-3.5 h-3.5" />
                   View
                 </button>
-                <button
-                  onClick={() => {
-                    setRevisingJD(jd);
-                    setUpdatedCompetenciesText(jd.competencies.join(", "));
-                    setUpdatedResponsibilitiesText(jd.responsibilities.join("\n"));
-                  }}
-                  className="px-3 py-1.5 bg-amber-50 text-amber-800 hover:bg-amber-600 hover:text-white rounded-lg text-xs font-bold cursor-pointer flex items-center gap-1"
-                >
-                  <Edit3 className="w-3.5 h-3.5" />
-                  Revise
-                </button>
+
+                {jd.isArchived ? (
+                  <>
+                    <button
+                      onClick={() => setRestoreTargetJD(jd)}
+                      className="px-3 py-1.5 bg-white text-[#042C51] hover:bg-emerald-50/60 border border-slate-200 hover:border-emerald-300 rounded-lg text-xs font-bold cursor-pointer flex items-center gap-1 shadow-2xs transition-all"
+                    >
+                      <ArchiveRestore className="w-3.5 h-3.5 text-emerald-600" />
+                      <span className="font-bold text-[#042C51]">Restore</span>
+                    </button>
+                    <button
+                      onClick={() => setDeleteTargetJD(jd)}
+                      className="px-3 py-1.5 bg-red-50 text-red-700 hover:bg-red-600 hover:text-white rounded-lg text-xs font-bold cursor-pointer flex items-center gap-1"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      Delete
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button
+                      onClick={() => {
+                        setRevisingJD(jd);
+                        setUpdatedCompetenciesText(jd.competencies.join(", "));
+                        setUpdatedResponsibilitiesText(jd.responsibilities.join("\n"));
+                      }}
+                      className="px-3 py-1.5 bg-amber-50 text-amber-800 hover:bg-amber-600 hover:text-white rounded-lg text-xs font-bold cursor-pointer flex items-center gap-1"
+                    >
+                      <Edit3 className="w-3.5 h-3.5" />
+                      Revise
+                    </button>
+                    <button
+                      onClick={() => setArchiveTargetJD(jd)}
+                      className="px-3 py-1.5 bg-slate-100 text-slate-700 hover:bg-slate-700 hover:text-white rounded-lg text-xs font-bold cursor-pointer flex items-center gap-1"
+                    >
+                      <Archive className="w-3.5 h-3.5" />
+                      Archive
+                    </button>
+                    <button
+                      onClick={() => setDeleteTargetJD(jd)}
+                      className="px-3 py-1.5 bg-red-50 text-red-700 hover:bg-red-600 hover:text-white rounded-lg text-xs font-bold cursor-pointer flex items-center gap-1"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      Delete
+                    </button>
+                  </>
+                )}
               </div>
             </div>
           ))}
@@ -837,9 +1198,13 @@ export default function JobDescriptionPage({ onSwitchModule }: JobDescriptionPag
         {filteredJDs.length === 0 && (
           <div className="p-12 text-center bg-slate-50">
             <FileText className="w-10 h-10 text-slate-300 mx-auto mb-3" />
-            <p className="text-sm font-black text-[#042C51]">No Job Descriptions Found</p>
+            <p className="text-sm font-black text-[#042C51]">
+              {selectedStatusTab === "Archived" ? "No Archived Job Descriptions" : "No Job Descriptions Found"}
+            </p>
             <p className="text-xs text-slate-400 max-w-md mx-auto mt-1">
-              No matching records found for search filter criteria or selected status tab.
+              {selectedStatusTab === "Archived"
+                ? "No job descriptions have been archived yet. Archived records will appear here for safe keeping and restoration."
+                : "No matching records found for search filter criteria or selected status tab."}
             </p>
             <button
               onClick={() => {
@@ -878,6 +1243,15 @@ export default function JobDescriptionPage({ onSwitchModule }: JobDescriptionPag
           setRevisingJD(jdToRevise);
           setUpdatedCompetenciesText(jdToRevise.competencies.join(", "));
           setUpdatedResponsibilitiesText(jdToRevise.responsibilities.join("\n"));
+        }}
+        onArchive={(jdToArchive) => {
+          setArchiveTargetJD(jdToArchive);
+        }}
+        onRestore={(jdToRestore) => {
+          setRestoreTargetJD(jdToRestore);
+        }}
+        onDelete={(jdToDelete) => {
+          setDeleteTargetJD(jdToDelete);
         }}
       />
 
@@ -980,7 +1354,206 @@ export default function JobDescriptionPage({ onSwitchModule }: JobDescriptionPag
         )}
       </AnimatePresence>
 
-      {/* ==================== 8. MODAL 4: STATUS MODAL (GLOBAL FEEDBACK OVERLAY) ==================== */}
+      {/* ==================== 8. MODAL 4: ARCHIVE CONFIRMATION MODAL ==================== */}
+      <AnimatePresence>
+        {archiveTargetJD && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-[#042C51]/80 backdrop-blur-sm overflow-y-auto">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              className="bg-white rounded-2xl max-w-lg w-full shadow-2xl border border-[#E6ECF2] my-8 overflow-hidden text-[#101828]"
+            >
+              <div className="bg-slate-900 text-white p-4 sm:p-5 flex items-center justify-between border-b border-slate-800">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl bg-amber-500/20 border border-amber-500/30 text-amber-400 flex items-center justify-center shrink-0">
+                    <Archive className="w-4.5 h-4.5" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm sm:text-base font-black text-white tracking-tight">
+                      Archive Job Description
+                    </h3>
+                    <p className="text-[11px] text-slate-300 font-medium">
+                      Move {archiveTargetJD.roleTitle} ({archiveTargetJD.id}) to repository
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setArchiveTargetJD(null)}
+                  className="p-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-slate-300 hover:text-white transition-all cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <div className="p-6 space-y-4">
+                <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200 space-y-1.5">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="font-bold text-[#042C51]">{archiveTargetJD.roleTitle}</span>
+                    <span className="text-[10px] font-mono text-slate-400">{archiveTargetJD.versionNo}</span>
+                  </div>
+                  <div className="text-[11px] text-slate-500">
+                    {archiveTargetJD.documentTitle} • {archiveTargetJD.department} ({archiveTargetJD.account})
+                  </div>
+                </div>
+
+                <div className="p-3 bg-amber-50 rounded-xl border border-amber-200 text-xs text-amber-900 leading-relaxed">
+                  <strong>Notice:</strong> Archiving will remove this JD from the active list and intake filters. You can restore it at any time from the <strong>Archived</strong> tab.
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-[#042C51] mb-1.5 uppercase tracking-wider">
+                    Archive Reason / Deprecation Category
+                  </label>
+                  <select
+                    value={archiveReason}
+                    onChange={(e) => setArchiveReason(e.target.value)}
+                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:bg-white focus:border-[#042C51] outline-hidden transition-all"
+                  >
+                    <option value="Position deprecated / no longer in active hiring">
+                      Position deprecated / no longer in active hiring
+                    </option>
+                    <option value="Replaced by updated JD specification">
+                      Replaced by updated JD specification
+                    </option>
+                    <option value="Client account phased out or closed">
+                      Client account phased out or closed
+                    </option>
+                    <option value="Duplicate or test intake entry">
+                      Duplicate or test intake entry
+                    </option>
+                    <option value="Other / Custom Reason">Other / Custom Reason</option>
+                  </select>
+                </div>
+
+                {archiveReason === "Other / Custom Reason" && (
+                  <div>
+                    <label className="block text-xs font-bold text-[#042C51] mb-1 uppercase tracking-wider">
+                      Specify Custom Reason
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Consolidated into Operations Lead v3.0..."
+                      value={customArchiveReason}
+                      onChange={(e) => setCustomArchiveReason(e.target.value)}
+                      className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:bg-white focus:border-[#042C51] outline-hidden transition-all"
+                    />
+                  </div>
+                )}
+              </div>
+
+              <div className="p-4 sm:p-5 bg-slate-50 border-t border-slate-100 flex items-center justify-end gap-2.5 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setArchiveTargetJD(null)}
+                  className="px-4 py-2 bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 rounded-xl text-xs font-bold transition-all cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleArchiveConfirm}
+                  className="px-5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-black transition-all cursor-pointer flex items-center gap-1.5 shadow-xs"
+                >
+                  <Archive className="w-3.5 h-3.5 text-amber-400" />
+                  Confirm Archive
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* ==================== 9. MODAL 5: RESTORE CONFIRMATION MODAL ==================== */}
+      <AnimatePresence>
+        {restoreTargetJD && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-[#042C51]/80 backdrop-blur-sm overflow-y-auto">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              className="bg-white rounded-2xl max-w-lg w-full shadow-2xl border border-[#E6ECF2] my-8 overflow-hidden text-[#101828]"
+            >
+              <div className="bg-emerald-900 text-white p-4 sm:p-5 flex items-center justify-between border-b border-emerald-800">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 flex items-center justify-center shrink-0">
+                    <RotateCcw className="w-4.5 h-4.5" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm sm:text-base font-black text-white tracking-tight">
+                      Restore Job Description
+                    </h3>
+                    <p className="text-[11px] text-emerald-200 font-medium">
+                      Reactivate {restoreTargetJD.roleTitle} to active database
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setRestoreTargetJD(null)}
+                  className="p-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-emerald-200 hover:text-white transition-all cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <div className="p-6 space-y-4">
+                <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200 space-y-1.5">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="font-bold text-[#042C51]">{restoreTargetJD.roleTitle}</span>
+                    <span className="text-[10px] font-mono text-slate-400">{restoreTargetJD.versionNo}</span>
+                  </div>
+                  <div className="text-[11px] text-slate-500">
+                    {restoreTargetJD.documentTitle} • {restoreTargetJD.department} ({restoreTargetJD.account})
+                  </div>
+                  {restoreTargetJD.archiveReason && (
+                    <div className="text-[10px] text-slate-600 pt-1 border-t border-slate-200">
+                      <span className="font-bold text-slate-700">Archived reason:</span> {restoreTargetJD.archiveReason}
+                    </div>
+                  )}
+                </div>
+
+                <p className="text-xs text-slate-600 leading-relaxed">
+                  Are you sure you want to restore this Job Description? It will immediately reappear in the active JDs list and be available for intake workflows.
+                </p>
+              </div>
+
+              <div className="p-4 sm:p-5 bg-slate-50 border-t border-slate-100 flex items-center justify-end gap-2.5 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setRestoreTargetJD(null)}
+                  className="px-4 py-2 bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 rounded-xl text-xs font-bold transition-all cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleRestoreConfirm()}
+                  className="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black transition-all cursor-pointer flex items-center gap-1.5 shadow-xs"
+                >
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                  Confirm Restore
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* ==================== STRICT DELETE CONFIRMATION MODAL WITH LINKED POSITIONS ==================== */}
+      <DeleteJobDescriptionModal
+        isOpen={!!deleteTargetJD}
+        jd={deleteTargetJD}
+        onClose={() => setDeleteTargetJD(null)}
+        onConfirmDelete={(jdToDelete) => handleDeleteConfirm(jdToDelete)}
+        onArchiveInstead={(jdToArchive) => {
+          setDeleteTargetJD(null);
+          setArchiveTargetJD(jdToArchive);
+        }}
+      />
+
+      {/* ==================== 10. MODAL 6: STATUS MODAL (GLOBAL FEEDBACK OVERLAY) ==================== */}
       <AnimatePresence>
         {statusModal.isOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#042C51]/80 backdrop-blur-sm">

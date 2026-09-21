@@ -320,31 +320,8 @@ export default function WeeklyReports({
   userEmail?: string;
   onSwitchModule?: (module: string) => void;
 }) {
-  // Helper to safely parse JSON from localStorage
-  const readLocalStorageJSON = (key: string, fallbackKey?: string) => {
-    try {
-      const raw = localStorage.getItem(key) || (fallbackKey ? localStorage.getItem(fallbackKey) : null);
-      if (raw) return JSON.parse(raw);
-    } catch (e) {
-      console.warn(`Failed to parse ${key}`, e);
-    }
-    return null;
-  };
-
   // --- STATE ---
-  const [reports, setReports] = useState<WeeklyReportItem[]>(() => {
-    const saved = readLocalStorageJSON("ta_weekly_reports");
-    if (Array.isArray(saved) && saved.length > 0) {
-      return saved;
-    }
-    try {
-      localStorage.setItem("ta_weekly_reports", JSON.stringify(INITIAL_REPORTS));
-    } catch (e) {
-      console.warn("Could not write initial ta_weekly_reports", e);
-    }
-    return INITIAL_REPORTS;
-  });
-
+  const [reports, setReports] = useState<WeeklyReportItem[]>(INITIAL_REPORTS);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("All");
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -354,52 +331,6 @@ export default function WeeklyReports({
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [isEmailPreviewOpen, setIsEmailPreviewOpen] = useState(false);
   const [isCopiedEmail, setIsCopiedEmail] = useState(false);
-
-  // Helper to persist reports
-  const saveReportsToStorage = (newReports: WeeklyReportItem[]) => {
-    setReports(newReports);
-    try {
-      localStorage.setItem("ta_weekly_reports", JSON.stringify(newReports));
-      window.dispatchEvent(new CustomEvent("ta-weekly-reports-updated"));
-    } catch (e) {
-      console.warn("Error saving ta_weekly_reports", e);
-    }
-  };
-
-  // Sync state from localStorage on external updates
-  const syncFromStorage = () => {
-    const saved = readLocalStorageJSON("ta_weekly_reports");
-    if (Array.isArray(saved) && saved.length > 0) {
-      setReports(saved);
-    }
-  };
-
-  // Cross-Module & Browser Event Listeners
-  React.useEffect(() => {
-    const handleEvents = () => {
-      syncFromStorage();
-    };
-
-    window.addEventListener("storage", handleEvents);
-    window.addEventListener("focus", handleEvents);
-    window.addEventListener("ta-public-submission-created", handleEvents);
-    window.addEventListener("ta-pipeline-sync-updated", handleEvents);
-    window.addEventListener("ta-offers-updated", handleEvents);
-    window.addEventListener("ta-onboarding-updated", handleEvents);
-    window.addEventListener("ta-action-items-updated", handleEvents);
-    window.addEventListener("ta-weekly-reports-updated", handleEvents);
-
-    return () => {
-      window.removeEventListener("storage", handleEvents);
-      window.removeEventListener("focus", handleEvents);
-      window.removeEventListener("ta-public-submission-created", handleEvents);
-      window.removeEventListener("ta-pipeline-sync-updated", handleEvents);
-      window.removeEventListener("ta-offers-updated", handleEvents);
-      window.removeEventListener("ta-onboarding-updated", handleEvents);
-      window.removeEventListener("ta-action-items-updated", handleEvents);
-      window.removeEventListener("ta-weekly-reports-updated", handleEvents);
-    };
-  }, []);
 
   // Toast Helper
   const triggerToast = (msg: string) => {
@@ -430,71 +361,17 @@ export default function WeeklyReports({
     };
   }, [reports]);
 
-  // Connected Module Signals Data (Dynamically aggregated from browser storage)
+  // Connected Module Signals Data
   const connectedSignals = useMemo(() => {
-    // Read Onboarding
-    const onboardingRecs = readLocalStorageJSON("ta_onboarding_records", "sibs_onboarding_records") || [];
-    const trueHiresCount = Array.isArray(onboardingRecs)
-      ? onboardingRecs.filter((r: any) => r.finalOutcome === "True Hire" || r.showStatus === "Show").length
-      : 28;
-    const pendingOnboardingCount = Array.isArray(onboardingRecs)
-      ? onboardingRecs.filter((r: any) => r.finalOutcome === "Pending Start" || r.showStatus === "Pending").length
-      : 5;
-    const resolvedOnboarding = Array.isArray(onboardingRecs) ? onboardingRecs.length - pendingOnboardingCount : 28;
-    const showRate = resolvedOnboarding > 0 ? Math.round((trueHiresCount / resolvedOnboarding) * 100) : 96;
-
-    // Read Offers
-    const offerRecs = readLocalStorageJSON("ta_offer_records", "sibs_offer_records") || [];
-    const totalOffers = Array.isArray(offerRecs) ? offerRecs.length : 32;
-    const acceptedOffers = Array.isArray(offerRecs)
-      ? offerRecs.filter((o: any) => ["Accepted", "Approved", "Signed"].includes(o.status)).length
-      : 28;
-    const pendingOffers = Array.isArray(offerRecs)
-      ? offerRecs.filter((o: any) => ["Pending", "Draft", "Sent"].includes(o.status)).length
-      : 3;
-    const declinedOffers = Array.isArray(offerRecs)
-      ? offerRecs.filter((o: any) => ["Declined", "Rejected", "Withdrawn"].includes(o.status)).length
-      : 1;
-
-    // Read Pipeline
-    const pipelineRecs = readLocalStorageJSON("ta_pipeline_candidates") || [];
-    const inScreening = Array.isArray(pipelineRecs)
-      ? pipelineRecs.filter((c: any) => (c.stage || c.status || "").toLowerCase().includes("screen")).length
-      : 38;
-    const inInterview = Array.isArray(pipelineRecs)
-      ? pipelineRecs.filter((c: any) => (c.stage || c.status || "").toLowerCase().includes("interview")).length
-      : 24;
-    const inOfferStage = Array.isArray(pipelineRecs)
-      ? pipelineRecs.filter((c: any) => (c.stage || c.status || "").toLowerCase().includes("offer")).length
-      : 14;
-
-    // Read Hiring Needs
-    const hiringNeeds = readLocalStorageJSON("ta_hiring_needs") || readLocalStorageJSON("ta_workforce_hiring_plan") || [];
-    const openPRFs = Array.isArray(hiringNeeds) ? hiringNeeds.length : 12;
-    const targetHeadcount = Array.isArray(hiringNeeds)
-      ? hiringNeeds.reduce((sum: number, item: any) => sum + Number(item.requiredHeadcount || item.required || item.target || 0), 0) || 45
-      : 45;
-
-    // Read Action Items
-    const actionItems = readLocalStorageJSON("ta_action_items") || [];
-    const openActionItems = Array.isArray(actionItems) ? actionItems.filter((a: any) => a.status !== "Completed").length : 5;
-    const overdueActionItems = Array.isArray(actionItems) ? actionItems.filter((a: any) => a.isOverdue || a.status === "Overdue").length : 2;
-
-    // Read Talent Pool
-    const publicLeads = readLocalStorageJSON("ta_public_candidate_submissions") || [];
-    const internalTalent = readLocalStorageJSON("ta_internal_candidates") || [];
-    const publicLeadsCount = Array.isArray(publicLeads) ? publicLeads.length : 25;
-    const silverPoolCount = Array.isArray(internalTalent) ? internalTalent.length : 42;
-
     return {
-      hiringNeeds: { openPRFs: openPRFs || 12, targetHeadcount: targetHeadcount || 45, status: "Active Ramp" },
-      candidatePipeline: { inScreening: inScreening || 38, inInterview: inInterview || 24, inOfferStage: inOfferStage || 14 },
-      offersContracts: { totalOffers: totalOffers || 32, accepted: acceptedOffers || 28, pending: pendingOffers || 3, declined: declinedOffers || 1 },
-      onboardingNHO: { onboardedThisWeek: trueHiresCount || 28, nhoCompleteness: `${showRate}%`, pending: pendingOnboardingCount },
-      actionItems: { overdue: overdueActionItems || 2, open: openActionItems || 5, escalations: 1 },
-      talentPool: { silverPool: silverPoolCount || 42, recyclable: 18, publicLeads: publicLeadsCount || 25 }
+      hiringNeeds: { openPRFs: 12, targetHeadcount: 45, status: "Active Ramp" },
+      candidatePipeline: { inScreening: 38, inInterview: 24, inOfferStage: 14 },
+      offersContracts: { totalOffers: 32, accepted: 28, pending: 3, declined: 1 },
+      onboardingNHO: { onboardedThisWeek: 28, nhoCompleteness: "96%" },
+      actionItems: { overdue: 2, open: 5, escalations: 1 },
+      talentPool: { silverPool: 42, recyclable: 18, publicLeads: 25 }
     };
-  }, [reports]);
+  }, []);
 
   // --- FILTERED REPORTS ---
   const filteredReports = useMemo(() => {
@@ -516,7 +393,6 @@ export default function WeeklyReports({
 
   // 1. Refresh Data
   const handleRefreshData = () => {
-    syncFromStorage();
     triggerToast("Re-ran background data checks and pulled latest metrics from all recruitment modules.");
   };
 
@@ -531,20 +407,6 @@ export default function WeeklyReports({
       return;
     }
 
-    // Dynamic metrics from current storage
-    const onboardingRecs = readLocalStorageJSON("ta_onboarding_records", "sibs_onboarding_records") || [];
-    const trueHires = Array.isArray(onboardingRecs)
-      ? onboardingRecs.filter((r: any) => r.finalOutcome === "True Hire" || r.showStatus === "Show").length
-      : 32;
-    const dropOffs = Array.isArray(onboardingRecs)
-      ? onboardingRecs.filter((r: any) => ["No Show", "Pre-start Withdrawal", "Withdrawn"].includes(r.finalOutcome) || ["No Show", "Withdrawn"].includes(r.showStatus)).length
-      : 2;
-
-    const offerRecs = readLocalStorageJSON("ta_offer_records", "sibs_offer_records") || [];
-    const acceptedOffersCount = Array.isArray(offerRecs)
-      ? offerRecs.filter((o: any) => ["Accepted", "Approved", "Signed"].includes(o.status)).length
-      : 32;
-
     const newReport: WeeklyReportItem = {
       id: newReportId,
       weekLabel: `Week ${nextWeekNum} (Jul 27 - Aug 02, 2026)`,
@@ -554,8 +416,8 @@ export default function WeeklyReports({
       generatedTimestamp: new Date().toISOString().replace("T", " ").substring(0, 19),
       emailSubject: `[Weekly Recruitment Digest] SiBS TA Performance Report - Week ${nextWeekNum} (Jul 27 - Aug 02, 2026)`,
       totalRequirement: 40,
-      totalFilled: trueHires || 32,
-      totalDropOffs: dropOffs || 2,
+      totalFilled: 32,
+      totalDropOffs: 2,
       openRolesCount: 4,
       atRiskRolesCount: 1,
       delayedRolesCount: 1,
@@ -566,10 +428,10 @@ export default function WeeklyReports({
         initialScreened: 92,
         endorsedToHM: 58,
         finalPassed: 40,
-        offersMade: Math.max(acceptedOffersCount + 3, 35),
-        offersAccepted: acceptedOffersCount || 32,
-        hired: trueHires || 32,
-        dropOffs: dropOffs || 2
+        offersMade: 35,
+        offersAccepted: 32,
+        hired: 32,
+        dropOffs: 2
       },
       rolesBreakdown: [
         {
@@ -610,8 +472,7 @@ export default function WeeklyReports({
       ]
     };
 
-    const updated = [newReport, ...reports];
-    saveReportsToStorage(updated);
+    setReports((prev) => [newReport, ...prev]);
     setSelectedReport(newReport);
     setIsDetailsModalOpen(true);
     triggerToast(`Instantly aggregated current real-time recruitment metrics into fresh draft report (${newReportId})!`);
@@ -619,39 +480,20 @@ export default function WeeklyReports({
 
   // 3. Mark Report as Sent
   const handleMarkAsSent = (reportId: string) => {
-    const updated = reports.map((r) => {
-      if (r.id === reportId) {
-        return { ...r, status: "Sent" as const };
-      }
-      return r;
-    });
-
-    saveReportsToStorage(updated);
+    setReports((prev) =>
+      prev.map((r) => {
+        if (r.id === reportId) {
+          return { ...r, status: "Sent" as const };
+        }
+        return r;
+      })
+    );
 
     if (selectedReport && selectedReport.id === reportId) {
       setSelectedReport((prev) => (prev ? { ...prev, status: "Sent" } : null));
     }
 
     triggerToast(`Report ${reportId} status updated to SENT and distributed to management logs.`);
-  };
-
-  // 4. Archive / Unarchive Report
-  const handleArchiveReport = (reportId: string) => {
-    const updated = reports.map((r) => {
-      if (r.id === reportId) {
-        const nextStatus: "Generated" | "Sent" | "Archived" = r.status === "Archived" ? "Sent" : "Archived";
-        return { ...r, status: nextStatus };
-      }
-      return r;
-    });
-
-    saveReportsToStorage(updated);
-
-    if (selectedReport && selectedReport.id === reportId) {
-      setSelectedReport((prev) => (prev ? { ...prev, status: prev.status === "Archived" ? "Sent" : "Archived" } : null));
-    }
-
-    triggerToast(`Report ${reportId} status updated successfully!`);
   };
 
   // 4. Export Report Text
@@ -1239,29 +1081,17 @@ ${report.missingDataExplanations.map((item, idx) => `${idx + 1}. ${item}`).join(
 
                       {/* Actions */}
                       <td className="p-3 text-center">
-                        <div className="flex items-center justify-center gap-1.5">
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setSelectedReport(report);
-                              setIsDetailsModalOpen(true);
-                            }}
-                            className="inline-flex items-center gap-1 text-[11px] font-extrabold text-[#042C51] bg-[#E9F0FC] hover:bg-blue-100 px-3 py-1 rounded-lg border border-blue-200 transition-all cursor-pointer"
-                          >
-                            <Eye className="w-3.5 h-3.5 text-[#FF5C28]" />
-                            <span>View Details</span>
-                          </button>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleArchiveReport(report.id);
-                            }}
-                            title={report.status === "Archived" ? "Restore Report" : "Archive Report"}
-                            className="p-1.5 text-slate-500 hover:text-slate-800 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors cursor-pointer"
-                          >
-                            <Archive className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedReport(report);
+                            setIsDetailsModalOpen(true);
+                          }}
+                          className="inline-flex items-center gap-1 text-[11px] font-extrabold text-[#042C51] bg-[#E9F0FC] hover:bg-blue-100 px-3 py-1 rounded-lg border border-blue-200 transition-all cursor-pointer"
+                        >
+                          <Eye className="w-3.5 h-3.5 text-[#FF5C28]" />
+                          <span>View Details</span>
+                        </button>
                       </td>
                     </tr>
                   ))
@@ -1280,7 +1110,7 @@ ${report.missingDataExplanations.map((item, idx) => `${idx + 1}. ${item}`).join(
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-4xl overflow-hidden my-8"
+              className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl overflow-hidden my-8"
             >
               {/* Modal Header */}
               <div className="bg-[#042C51] text-white p-5 flex items-center justify-between border-b border-blue-900">
@@ -1607,32 +1437,21 @@ ${report.missingDataExplanations.map((item, idx) => `${idx + 1}. ${item}`).join(
                   </button>
                 </div>
 
-                <div className="flex items-center gap-2">
-                  {/* Mark as Sent Button */}
-                  {selectedReport.status === "Generated" && (
-                    <button
-                      onClick={() => handleMarkAsSent(selectedReport.id)}
-                      className="flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black rounded-lg transition-all cursor-pointer shadow-xs"
-                    >
-                      <CheckCircle2 className="w-4 h-4" />
-                      <span>Mark as Sent</span>
-                    </button>
-                  )}
-                  {selectedReport.status === "Sent" && (
-                    <span className="text-xs font-extrabold text-emerald-700 bg-emerald-100 px-3 py-1.5 rounded-lg border border-emerald-200 flex items-center gap-1">
-                      <CheckCircle2 className="w-3.5 h-3.5" />
-                      Report Status: SENT
-                    </span>
-                  )}
-                  {/* Archive Toggle Button */}
+                {/* Mark as Sent Button */}
+                {selectedReport.status === "Generated" ? (
                   <button
-                    onClick={() => handleArchiveReport(selectedReport.id)}
-                    className="flex items-center gap-1.5 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-extrabold rounded-lg border border-slate-200 transition-all cursor-pointer"
+                    onClick={() => handleMarkAsSent(selectedReport.id)}
+                    className="flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black rounded-lg transition-all cursor-pointer shadow-xs"
                   >
-                    <Archive className="w-3.5 h-3.5" />
-                    <span>{selectedReport.status === "Archived" ? "Restore Report" : "Archive"}</span>
+                    <CheckCircle2 className="w-4 h-4" />
+                    <span>Mark as Sent</span>
                   </button>
-                </div>
+                ) : (
+                  <span className="text-xs font-extrabold text-emerald-700 bg-emerald-100 px-3 py-1.5 rounded-lg border border-emerald-200 flex items-center gap-1">
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    Report Status: SENT
+                  </span>
+                )}
               </div>
             </motion.div>
           </div>
@@ -1647,7 +1466,7 @@ ${report.missingDataExplanations.map((item, idx) => `${idx + 1}. ${item}`).join(
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-white rounded-2xl shadow-2xl border border-slate-300 w-full max-w-3xl overflow-hidden my-8"
+              className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl overflow-hidden my-8"
             >
               {/* Email View Header */}
               <div className="bg-[#042C51] text-white p-4 flex items-center justify-between border-b border-blue-900">

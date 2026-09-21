@@ -149,7 +149,7 @@ export default function CandidateProfileModal({
         initial={{ scale: 0.96, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.96, opacity: 0 }}
-        className="bg-[#F8FAFC] rounded-2xl shadow-2xl border border-slate-200 w-full max-w-6xl overflow-hidden my-auto text-slate-900 flex flex-col max-h-[92vh] relative"
+        className="bg-[#F8FAFC] rounded-2xl shadow-2xl w-full max-w-6xl overflow-hidden my-auto text-slate-900 flex flex-col max-h-[92vh] relative"
       >
         {/* Toast Notification */}
         {toastMessage && (
@@ -786,13 +786,37 @@ export default function CandidateProfileModal({
             {activeTab === "Application" && (
               <div className="space-y-4 text-xs">
                 {activeSubtopic === "Overview" && (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                    <FieldBox label="SOURCING CHANNEL" value={currentData.sourcingChannel} isEditing={isEditing} />
-                    <FieldBox label="ASSIGNED RECRUITER" value={currentData.recruiter} isEditing={isEditing} />
-                    <FieldBox label="APPLIED POSITION" value={currentData.appliedPosition} isEditing={isEditing} />
-                    <FieldBox label="TARGET ACCOUNT FIT" value={currentData.accountFit} isEditing={isEditing} />
-                    <FieldBox label="APPLICATION DATE" value={currentData.applicationDate} isEditing={isEditing} />
-                    <FieldBox label="CURRENT CANDIDATE STATUS" value={currentData.status} isEditing={isEditing} />
+                  <div className="space-y-4">
+                    {/* Inbound Lead Origin Banner if candidate is from leads */}
+                    {(currentData.sourcingChannel?.toLowerCase().includes("lead") ||
+                      currentData.notes?.includes("LEAD-") ||
+                      currentData.history?.some(h => h.action.toLowerCase().includes("lead"))) && (
+                      <div className="p-4 bg-orange-50/80 border border-orange-200 rounded-xl space-y-2">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <span className="bg-[#FF5C28] text-white text-[10px] font-black px-2 py-0.5 rounded uppercase tracking-wider flex items-center gap-1">
+                              <SparkleIcon className="w-3 h-3" /> Originated from Applicant Lead
+                            </span>
+                            <span className="text-xs font-bold text-orange-950">Inbound Lead Intake Dossier</span>
+                          </div>
+                          <span className="text-[10px] font-mono text-orange-700 bg-orange-100 px-2 py-0.5 rounded font-bold">
+                            Lead Record Verified
+                          </span>
+                        </div>
+                        <p className="text-xs text-orange-900/90 leading-relaxed">
+                          This candidate profile was successfully converted and transferred from the <strong>Applicant Leads & Inquiries Intake Database</strong>. All initial inquiry metadata, recruiter contact records, and timestamps have been merged into this Talent Pool profile.
+                        </p>
+                      </div>
+                    )}
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                      <FieldBox label="SOURCING CHANNEL" value={currentData.sourcingChannel} isEditing={isEditing} />
+                      <FieldBox label="ASSIGNED RECRUITER" value={currentData.recruiter} isEditing={isEditing} />
+                      <FieldBox label="APPLIED POSITION" value={currentData.appliedPosition} isEditing={isEditing} />
+                      <FieldBox label="TARGET ACCOUNT FIT" value={currentData.accountFit} isEditing={isEditing} />
+                      <FieldBox label="APPLICATION DATE" value={currentData.applicationDate} isEditing={isEditing} />
+                      <FieldBox label="CURRENT CANDIDATE STATUS" value={currentData.status} isEditing={isEditing} />
+                    </div>
                   </div>
                 )}
 
@@ -811,21 +835,48 @@ export default function CandidateProfileModal({
 
                 {activeSubtopic === "Status History" && (
                   <div className="space-y-3">
-                    <h4 className="text-xs font-black text-[#042C51] uppercase">Audit History & State Transitions</h4>
+                    <div className="flex items-center justify-between">
+                      <h4 className="text-xs font-black text-[#042C51] uppercase">Audit History & State Transitions</h4>
+                      <span className="text-[10px] text-slate-400 font-medium">Includes Sourcing & Lead Intake Logs</span>
+                    </div>
+
                     <div className="space-y-2">
-                      {currentData.history.map((h, i) => (
-                        <div key={i} className="p-3 bg-slate-50 rounded-xl border border-slate-200 flex items-start gap-3 text-xs">
-                          <div className="p-1.5 bg-blue-100 text-[#042C51] rounded-lg mt-0.5">
-                            <Clock className="w-3.5 h-3.5" />
+                      {currentData.history.map((h, i) => {
+                        const isLeadAction = h.action.toLowerCase().includes("lead") || h.action.toLowerCase().includes("inbound");
+                        return (
+                          <div 
+                            key={i} 
+                            className={`p-3 rounded-xl border flex items-start gap-3 text-xs transition-all ${
+                              isLeadAction 
+                                ? "bg-orange-50/60 border-orange-200" 
+                                : "bg-slate-50 border-slate-200"
+                            }`}
+                          >
+                            <div className={`p-1.5 rounded-lg mt-0.5 ${
+                              isLeadAction 
+                                ? "bg-orange-500 text-white" 
+                                : "bg-blue-100 text-[#042C51]"
+                            }`}>
+                              {isLeadAction ? <SparkleIcon className="w-3.5 h-3.5" /> : <Clock className="w-3.5 h-3.5" />}
+                            </div>
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2">
+                                <p className={`font-bold ${isLeadAction ? "text-orange-950" : "text-slate-800"}`}>
+                                  {h.action}
+                                </p>
+                                {isLeadAction && (
+                                  <span className="text-[9px] font-black uppercase px-1.5 py-0.5 bg-orange-200 text-orange-800 rounded">
+                                    Lead History
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-[10px] text-slate-400 font-mono mt-0.5">
+                                {h.date} • Performed by: <strong>{h.user}</strong>
+                              </p>
+                            </div>
                           </div>
-                          <div>
-                            <p className="font-bold text-slate-800">{h.action}</p>
-                            <p className="text-[10px] text-slate-400 font-mono mt-0.5">
-                              {h.date} • Performed by: {h.user}
-                            </p>
-                          </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   </div>
                 )}

@@ -155,62 +155,24 @@ export interface WorkforcePlan {
   }[];
 }
 
-export type ResignationType = "Formal" | "Immediate";
+export type ScheduleCategory = "Talent Acquisition" | "Human Resources" | "Training & Onboarding" | "Operations & WFM";
 
-export type ResignationStatus = 
-  | "Pending Approval" 
-  | "Notice Period" 
-  | "Approved" 
-  | "Declined" 
-  | "Retracted" 
-  | "Completed";
+export type ScheduleStatus = "Scheduled" | "In Progress" | "Completed" | "Rescheduled" | "Cancelled";
 
-export type ResignationReason =
-  | "Career Change / Advancement"
-  | "Health"
-  | "Greener Pasture"
-  | "Relocation"
-  | "Studies / School"
-  | "Family"
-  | "Grievance"
-  | "Personal - Transportation"
-  | "Other";
-
-export interface ResignationAttachment {
-  name: string;
-  url?: string;
-  size?: string;
-  type?: string;
-}
-
-export interface ApprovalHistoryItem {
-  stage: string;
-  approver: string;
-  status: "Pending" | "Approved" | "Declined" | "Retracted" | "Cancelled";
-  date: string;
-  notes?: string;
-}
-
-export interface ResignationRecord {
+export interface ScheduleItem {
   id: string;
-  sibsId: string;
-  employeeName: string;
-  position: string;
-  department: string;
-  account: string;
-  cluster: string;
-  type: ResignationType;
-  submissionDate: string;
-  resignationDate: string;
-  lastWorkingDate: string;
-  status: ResignationStatus;
-  reason: ResignationReason | string;
-  otherReasonDetails?: string;
-  remarks?: string;
-  attachments: ResignationAttachment[];
-  rejectionReason?: string;
-  retractionReason?: string;
-  extensionReason?: string;
-  hrNotes?: string;
-  approvalHistory: ApprovalHistoryItem[];
+  title: string;
+  category: ScheduleCategory;
+  date: string; // "YYYY-MM-DD" e.g. "2026-07-29"
+  startTime: string; // "09:00"
+  endTime: string; // "10:30"
+  location: string;
+  organizer: string;
+  participantOrAccount: string;
+  status: ScheduleStatus;
+  priority: "Low" | "Medium" | "High";
+  notes?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
+

@@ -66,12 +66,9 @@ const OPEN_POSITIONS = [
 ];
 
 const LOCATIONS = [
-  "Alabang Site, Metro Manila",
-  "Cebu IT Park Site",
-  "Clark Freeport Zone Site",
-  "Davao City Site",
-  "Quezon City Site",
-  "Remote / Work-from-Home"
+  "Tagum City",
+  "Davao City",
+  "Municipality of Mabini"
 ];
 
 const CERTIFICATIONS_LIST = [
@@ -468,7 +465,7 @@ export default function AddCandidateModal({
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.96, y: 10 }}
           transition={{ duration: 0.2 }}
-          className="bg-white rounded-2xl max-w-4xl w-full shadow-2xl border border-[#E6ECF2] my-6 flex flex-col max-h-[92vh] overflow-hidden text-[#101828]"
+          className="bg-white rounded-2xl max-w-4xl w-full shadow-2xl my-6 flex flex-col max-h-[92vh] overflow-hidden text-[#101828]"
         >
           {/* ==================== 1. MODAL HEADER ==================== */}
           <div className="bg-[#042C51] text-white p-5 px-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#063a6b] shrink-0">

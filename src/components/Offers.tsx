@@ -2130,7 +2130,7 @@ export default function Offers({ userEmail = "alena.batacan@thesiblingssolutions
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="bg-white rounded-2xl border border-slate-200 shadow-2xl w-full max-w-3xl overflow-hidden flex flex-col max-h-[92vh]"
+              className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl overflow-hidden flex flex-col max-h-[92vh]"
             >
               {/* Header Matching Image 2 Theme */}
               <div className="px-6 py-4 bg-[#042C51] text-white flex items-center justify-between shrink-0">
@@ -2525,7 +2525,7 @@ export default function Offers({ userEmail = "alena.batacan@thesiblingssolutions
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="bg-white rounded-2xl border border-slate-200 shadow-2xl w-full max-w-xl overflow-hidden flex flex-col max-h-[90vh]"
+              className="bg-white rounded-2xl shadow-2xl w-full max-w-xl overflow-hidden flex flex-col max-h-[90vh]"
             >
               {/* Header Matching Image 2 Theme */}
               <div className="px-6 py-4 bg-[#042C51] text-white flex items-center justify-between">
@@ -2775,7 +2775,7 @@ export default function Offers({ userEmail = "alena.batacan@thesiblingssolutions
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="bg-white rounded-2xl border border-slate-200 shadow-2xl w-full max-w-md overflow-hidden flex flex-col"
+              className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col"
             >
               <div className="px-6 py-4 bg-[#042C51] text-white flex items-center justify-between">
                 <div className="space-y-0.5">
@@ -2849,7 +2849,7 @@ export default function Offers({ userEmail = "alena.batacan@thesiblingssolutions
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="bg-white rounded-xl border border-slate-200 shadow-2xl w-full max-w-sm overflow-hidden"
+              className="bg-white rounded-xl shadow-2xl w-full max-w-sm overflow-hidden"
             >
               <div className="p-5 space-y-3">
                 <div className="flex items-center gap-2.5 text-slate-800">
@@ -2908,7 +2908,7 @@ export default function Offers({ userEmail = "alena.batacan@thesiblingssolutions
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="bg-white rounded-2xl border border-slate-200 shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]"
+              className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]"
             >
               {/* Modal Header */}
               <div className="px-6 py-4 bg-[#042C51] text-white flex items-center justify-between">

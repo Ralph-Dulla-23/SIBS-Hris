@@ -24,46 +24,18 @@ import {
   Briefcase,
   BarChart2,
   User,
-  Users,
   Flag,
   ArrowUpRight,
   ArrowDownRight,
   FileText,
-  Download,
-  BookOpen,
-  Workflow,
-  Code,
-  Database,
-  Network,
-  Cpu,
-  ShieldAlert,
-  GitBranch,
-  Terminal,
-  Sliders,
-  Settings,
-  ChevronDown
+  Download
 } from "lucide-react";
 import { 
   PlanStatus, 
   ActionItemStatus, 
   RiskLevel, 
-  WorkforcePlan,
-  DetailRecord
+  WorkforcePlan 
 } from "../types";
-import { INITIAL_DETAIL_RECORDS } from "../data";
-import PipelineStageDropChart from "./PipelineStageDropChart";
-import LeadsToInterviewTrendChart from "./LeadsToInterviewTrendChart";
-import HiringRateTrendChart from "./HiringRateTrendChart";
-import {
-  ResponsiveContainer,
-  AreaChart,
-  Area,
-  XAxis,
-  YAxis,
-  Tooltip,
-  CartesianGrid,
-  ReferenceLine
-} from "recharts";
 
 interface PlanSectionProps {
   plans: WorkforcePlan[];
@@ -109,26 +81,11 @@ export default function PlanSection({
   const [searchQuery, setSearchQuery] = useState("");
 
   // Modals state
-  const [isArchitectureModalOpen, setIsArchitectureModalOpen] = useState(false);
-  const [activeArchTab, setActiveArchTab] = useState<"process" | "relationships" | "api" | "formulas" | "filters" | "audit">("process");
   const [isAiModalOpen, setIsAiModalOpen] = useState(false);
   const [isKpiModalOpen, setIsKpiModalOpen] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [isViewPlanModalOpen, setIsViewPlanModalOpen] = useState(false);
   const [selectedWeekDetails, setSelectedWeekDetails] = useState<ForecastWeekData | null>(null);
-  const [modalSearchQuery, setModalSearchQuery] = useState("");
-
-  // Filtered account/cluster detail records for the Forecast Week modal
-  const filteredModalRecords = useMemo(() => {
-    return INITIAL_DETAIL_RECORDS.filter(r => {
-      const matchCluster = selectedCluster === "All" || r.cluster === selectedCluster;
-      const matchAccount = selectedAccount === "All" || r.account === selectedAccount;
-      const matchSearch = !modalSearchQuery.trim() || 
-        r.account.toLowerCase().includes(modalSearchQuery.toLowerCase()) || 
-        r.cluster.toLowerCase().includes(modalSearchQuery.toLowerCase());
-      return matchCluster && matchAccount && matchSearch;
-    });
-  }, [selectedCluster, selectedAccount, modalSearchQuery]);
   
   // Action Item Setup Modal
   const [isActionModalOpen, setIsActionModalOpen] = useState(false);
@@ -659,16 +616,6 @@ export default function PlanSection({
             </select>
           </div>
 
-          {/* Technical Specs & System Architecture Modal Trigger */}
-          <button
-            onClick={() => setIsArchitectureModalOpen(true)}
-            className="px-3.5 py-2 text-xs font-black bg-[#042C51] hover:bg-[#063b6b] text-white rounded-xl shadow-md flex items-center gap-1.5 transition-all border border-[#063b6b]"
-          >
-            <BookOpen className="w-3.5 h-3.5 text-[#7DD3FC]" />
-            <span>System Specs & Architecture</span>
-            <span className="px-1.5 py-0.5 text-[9px] font-black bg-[#FF5C28] text-white rounded">V2.4</span>
-          </button>
-
           {/* AI Workforce Intelligence Advisor Trigger Button */}
           <button
             onClick={() => setIsAiModalOpen(true)}
@@ -714,25 +661,6 @@ export default function PlanSection({
             <span>Create Plan</span>
           </button>
         </div>
-      </div>
-
-      {/* ==================== LIVE OPERATIONAL FORMULAS & WORKFLOW STRIP ==================== */}
-      <div className="bg-[#042C51] text-white p-3 rounded-2xl border border-[#063b6b] shadow-xs flex flex-wrap items-center justify-between gap-3 text-xs">
-        <div className="flex flex-wrap items-center gap-2">
-          <Code className="w-4 h-4 text-[#7DD3FC]" />
-          <span className="font-extrabold tracking-wide uppercase text-[11px] text-[#7DD3FC]">Verified Formulas & Pipeline:</span>
-          <span className="text-[11px] text-slate-200 font-mono bg-[#031B33] px-2 py-0.5 rounded border border-[#063b6b]" title="Net Actual HC = Actual HC - Absenteeism">Net HC = Actual - Abs</span>
-          <span className="text-[11px] text-slate-200 font-mono bg-[#031B33] px-2 py-0.5 rounded border border-[#063b6b]" title="Buffer Cushion % = ((Net Actual - Required) / Required) * 100">Buffer % = ((Net - Req)/Req)*100</span>
-          <span className="text-[11px] text-slate-200 font-mono bg-[#031B33] px-2 py-0.5 rounded border border-[#063b6b]" title="Hiring Needed = Math.max(0, Required - Net Actual)">Hiring Needed = Math.max(0, Req - Net)</span>
-          <span className="text-[11px] text-emerald-300 font-mono bg-[#031B33] px-2 py-0.5 rounded border border-[#063b6b]" title="5 Training Milestones">JO ➔ NHO ➔ FST ➔ PST ➔ Go Live</span>
-        </div>
-        <button
-          onClick={() => setIsArchitectureModalOpen(true)}
-          className="text-[10px] font-extrabold text-[#7DD3FC] hover:text-white flex items-center gap-1 underline transition-colors"
-        >
-          <span>Open Full Technical Review & API Contracts</span>
-          <ChevronRight className="w-3.5 h-3.5 text-[#FF5C28]" />
-        </button>
       </div>
 
       {/* ==================== 3. EXECUTIVE KPI SUMMARY CARDS ==================== */}
@@ -836,165 +764,6 @@ export default function PlanSection({
         </div>
       </section>
 
-      {/* ==================== 6-WEEK PIPELINE & TREND HIGHLIGHTS CARDS ==================== */}
-      <section className="space-y-4 select-none">
-        {/* Top Row: Pipeline Flow (70%) + Attrition by Stage (30%) */}
-        <div className="grid grid-cols-1 lg:grid-cols-10 gap-4">
-          {/* Card 1: Pipeline Flow – Total (6 Weeks) */}
-          <div className="lg:col-span-7 bg-white p-4 rounded-2xl border border-[#E6ECF2] shadow-sm flex flex-col justify-between space-y-3">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-              <div className="flex items-center gap-2">
-                <div className="p-1.5 bg-[#042C51] text-white rounded-lg">
-                  <Workflow className="w-4 h-4 text-[#7DD3FC]" />
-                </div>
-                <div>
-                  <h4 className="text-xs font-black text-[#042C51]">Pipeline Flow – Total (6 Weeks)</h4>
-                  <p className="text-[10px] text-slate-400 font-medium">6-Week Cumulative Training Funnel</p>
-                </div>
-              </div>
-              <span className="px-2 py-0.5 text-[9px] font-black bg-blue-50 text-blue-700 rounded-full border border-blue-100">
-                270 JO
-              </span>
-            </div>
-
-            <div className="py-1 overflow-x-auto">
-              <PipelineStageDropChart
-                hideCardWrapper={true}
-                stages={[
-                  { name: "Accepted", shortName: "Job Offer", count: 270, subtitle: "Accepted JO", color: "#042C51" },
-                  { name: "NHO", shortName: "Count", count: 252, subtitle: "NHO Count", color: "#2563EB" },
-                  { name: "FST", shortName: "Count", count: 230, subtitle: "FST Count", color: "#0D9488" },
-                  { name: "PST", shortName: "Count", count: 210, subtitle: "PST Count", color: "#EA580C" },
-                  { name: "Go Live", shortName: "Count", count: 192, subtitle: "Go Live", color: "#15803D" },
-                ]}
-              />
-            </div>
-
-            <div className="flex items-center justify-between text-[10px] text-slate-500 pt-1 border-t border-slate-100">
-              <span>Overall Conversion:</span>
-              <strong className="text-[#FF5C28] font-mono font-black">71.1% (JO to Live)</strong>
-            </div>
-          </div>
-
-          {/* Card 2: Attrition by Stage – Total (6 Weeks) */}
-          <div className="lg:col-span-3 bg-white p-4 rounded-2xl border border-[#E6ECF2] shadow-sm flex flex-col justify-between space-y-3">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-              <div className="flex items-center gap-2">
-                <div className="p-1.5 bg-rose-50 text-rose-600 rounded-lg">
-                  <ShieldAlert className="w-4 h-4" />
-                </div>
-                <div>
-                  <h4 className="text-xs font-black text-[#042C51]">Attrition by Stage – Total (6 Weeks)</h4>
-                  <p className="text-[10px] text-slate-400 font-medium">Stage Drop-off Loss Breakdown</p>
-                </div>
-              </div>
-              <span className="px-2 py-0.5 text-[9px] font-black bg-rose-50 text-rose-700 rounded-full border border-rose-100">
-                78 Losses
-              </span>
-            </div>
-
-            <div className="space-y-1.5 text-[11px]">
-              <div className="flex items-center justify-between p-1 bg-slate-50 rounded border border-slate-100">
-                <span className="font-semibold text-slate-600">JO ➔ NHO:</span>
-                <span className="font-mono font-bold text-rose-600">18 candidates (6.7%)</span>
-              </div>
-              <div className="flex items-center justify-between p-1 bg-slate-50 rounded border border-slate-100">
-                <span className="font-semibold text-slate-600">NHO ➔ FST:</span>
-                <span className="font-mono font-bold text-rose-600">22 candidates (8.7%)</span>
-              </div>
-              <div className="flex items-center justify-between p-1 bg-slate-50 rounded border border-slate-100">
-                <span className="font-semibold text-slate-600">FST ➔ PST:</span>
-                <span className="font-mono font-bold text-rose-600">20 candidates (8.7%)</span>
-              </div>
-              <div className="flex items-center justify-between p-1 bg-slate-50 rounded border border-slate-100">
-                <span className="font-semibold text-slate-600">PST ➔ Go Live:</span>
-                <span className="font-mono font-bold text-rose-600">18 candidates (8.6%)</span>
-              </div>
-            </div>
-
-            <div className="flex items-center justify-between text-[10px] text-slate-500 pt-1 border-t border-slate-100">
-              <span>Cumulative Loss Rate:</span>
-              <strong className="text-rose-600 font-mono font-black">28.9% Total Drop</strong>
-            </div>
-          </div>
-        </div>
-
-        {/* Bottom Row: 2 Trend Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Card 3: Leads to Interview Trend */}
-          <div className="bg-white p-4 rounded-2xl border border-[#E6ECF2] shadow-sm flex flex-col justify-between space-y-3 select-none">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-              <div className="flex items-center gap-2">
-                <div className="p-1.5 bg-indigo-50 text-indigo-600 rounded-lg">
-                  <Users className="w-4 h-4" />
-                </div>
-                <div>
-                  <h4 className="text-xs font-black text-[#042C51]">Leads to Interview Trend</h4>
-                  <p className="text-[10px] text-slate-400 font-medium">6-Week Sourcing Volume & Yield</p>
-                </div>
-              </div>
-              <span className="px-2 py-0.5 text-[9px] font-black bg-indigo-50 text-indigo-700 rounded-full border border-indigo-100">
-                1,250 Leads
-              </span>
-            </div>
-
-            <div className="space-y-1">
-              <div className="flex items-baseline justify-between mb-1">
-                <div>
-                  <span className="text-xl font-black text-[#042C51] font-mono">480</span>
-                  <span className="text-[10px] text-slate-400 font-bold uppercase ml-1">Interviews</span>
-                </div>
-                <span className="text-xs font-mono font-extrabold text-indigo-600">38.4% Avg Yield</span>
-              </div>
-
-              {/* Custom SVG Overview-Style Chart */}
-              <LeadsToInterviewTrendChart />
-            </div>
-
-            <div className="flex items-center justify-between text-[10px] text-slate-500 pt-1 border-t border-slate-100">
-              <span>Weekly Avg Sourcing:</span>
-              <strong className="text-indigo-700 font-mono font-black">208 Leads / Wk</strong>
-            </div>
-          </div>
-
-          {/* Card 4: Hiring Rate Trend */}
-          <div className="bg-white p-4 rounded-2xl border border-[#E6ECF2] shadow-sm flex flex-col justify-between space-y-3 select-none">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-              <div className="flex items-center gap-2">
-                <div className="p-1.5 bg-teal-50 text-teal-600 rounded-lg">
-                  <TrendingUp className="w-4 h-4" />
-                </div>
-                <div>
-                  <h4 className="text-xs font-black text-[#042C51]">Hiring Rate Trend</h4>
-                  <p className="text-[10px] text-slate-400 font-medium">6-Week Lead-to-JO Yield %</p>
-                </div>
-              </div>
-              <span className="px-2 py-0.5 text-[9px] font-black bg-teal-50 text-teal-700 rounded-full border border-teal-100">
-                21.6% Avg
-              </span>
-            </div>
-
-            <div className="space-y-1">
-              <div className="flex items-baseline justify-between mb-1">
-                <div>
-                  <span className="text-xl font-black text-teal-600 font-mono">21.6%</span>
-                  <span className="text-[10px] text-slate-400 font-bold uppercase ml-1">JO Yield</span>
-                </div>
-                <span className="text-xs font-mono font-extrabold text-emerald-600">192 Deployed</span>
-              </div>
-
-              {/* Custom SVG Overview-Style Chart */}
-              <HiringRateTrendChart />
-            </div>
-
-            <div className="flex items-center justify-between text-[10px] text-slate-500 pt-1 border-t border-slate-100">
-              <span>6-Wk Target Status:</span>
-              <strong className="text-teal-700 font-mono font-black">On Target (≥ 20%)</strong>
-            </div>
-          </div>
-        </div>
-      </section>
-
       {/* ==================== TABLE 1: 6-WEEK FORECAST HEADCOUNT PLAN ==================== */}
       {/* Component: ForecastHeadcountPlanTables */}
       <section className="bg-white p-5 rounded-2xl border border-[#E6ECF2] shadow-sm space-y-4 select-none">
@@ -1028,47 +797,47 @@ export default function PlanSection({
           }`}
         >
           <table className="w-full text-left border-collapse text-xs whitespace-nowrap">
-            <thead className="bg-[#F8FAFC] text-[#042C51] text-[10px] font-bold uppercase tracking-wider sticky top-0 z-10 border-b border-[#CBD5E1] shadow-2xs">
+            <thead className="bg-[#042C51] text-white text-[10px] font-bold uppercase tracking-wider sticky top-0 z-10">
               {/* Category Grouping Row 1 */}
-              <tr className="border-b border-[#CBD5E1]">
-                <th colSpan={2} className="px-3 py-2 bg-[#E2EBF4] text-[#042C51] border-r border-[#CBD5E1] text-center font-black">
+              <tr className="border-b border-[#063b6b]">
+                <th colSpan={2} className="px-3 py-2 bg-[#031B33] text-[#7DD3FC] border-r border-[#063b6b] text-center font-black">
                   1. FORECAST WEEK & PERIOD
                 </th>
-                <th colSpan={5} className="px-3 py-2 bg-[#EEF4FB] text-[#042C51] border-r border-[#CBD5E1] text-center font-black">
+                <th colSpan={5} className="px-3 py-2 bg-[#042C51] text-[#A5F3FC] border-r border-[#063b6b] text-center font-black">
                   2. CAPACITY & SHORTFALL
                 </th>
-                <th colSpan={4} className="px-3 py-2 bg-[#E2EBF4] text-[#042C51] border-r border-[#CBD5E1] text-center font-black">
+                <th colSpan={4} className="px-3 py-2 bg-[#031B33] text-[#7DD3FC] border-r border-[#063b6b] text-center font-black">
                   3. WEEKLY LOSS TELEMETRY
                 </th>
-                <th colSpan={5} className="px-3 py-2 bg-[#EEF4FB] text-[#042C51] border-r border-[#CBD5E1] text-center font-black">
+                <th colSpan={5} className="px-3 py-2 bg-[#042C51] text-[#A5F3FC] border-r border-[#063b6b] text-center font-black">
                   4. TRAINING MILESTONE & CONVERSION PIPELINE
                 </th>
-                <th colSpan={2} className="px-3 py-2 bg-[#E2EBF4] text-[#042C51] text-center font-black">
+                <th colSpan={2} className="px-3 py-2 bg-[#031B33] text-[#7DD3FC] text-center font-black">
                   5. YIELD & LEADS TARGET
                 </th>
               </tr>
 
               {/* Individual Column Header Row 2 */}
-              <tr className="bg-[#F8FAFC] text-[10px] text-[#042C51]">
-                <th className="px-3 py-2.5 border-r border-[#CBD5E1]">Forecast Week</th>
-                <th className="px-3 py-2.5 border-r border-[#CBD5E1]">Date Range</th>
+              <tr className="bg-[#042C51] text-[10px]">
+                <th className="px-3 py-2.5 border-r border-[#063b6b]">Forecast Week</th>
+                <th className="px-3 py-2.5 border-r border-[#063b6b]">Date Range</th>
 
                 <th className="px-3 py-2.5 text-right">Required HC</th>
                 <th className="px-3 py-2.5 text-right">Actual HC</th>
                 <th className="px-3 py-2.5 text-right">Net Actual HC</th>
                 <th className="px-3 py-2.5 text-right">Buffer %</th>
-                <th className="px-3 py-2.5 text-right border-r border-[#CBD5E1]">Hiring Needed</th>
+                <th className="px-3 py-2.5 text-right border-r border-[#063b6b]">Hiring Needed</th>
 
                 <th className="px-3 py-2.5 text-right">Absenteeism</th>
                 <th className="px-3 py-2.5 text-right">Abs %</th>
                 <th className="px-3 py-2.5 text-right">Attrition</th>
-                <th className="px-3 py-2.5 text-right border-r border-[#CBD5E1]">Att %</th>
+                <th className="px-3 py-2.5 text-right border-r border-[#063b6b]">Att %</th>
 
                 <th className="px-3 py-2.5 text-right">Accepted JO</th>
                 <th className="px-3 py-2.5 text-right">NHO Count</th>
                 <th className="px-3 py-2.5 text-right">FST Count</th>
                 <th className="px-3 py-2.5 text-right">PST Count</th>
-                <th className="px-3 py-2.5 text-right border-r border-[#CBD5E1]">Go Live</th>
+                <th className="px-3 py-2.5 text-right border-r border-[#063b6b]">Go Live</th>
 
                 <th className="px-3 py-2.5 text-right">Hiring Rate %</th>
                 <th className="px-3.5 py-2.5 text-right">Leads Needed</th>
@@ -1144,34 +913,34 @@ export default function PlanSection({
             </tbody>
 
             {/* Table 1 Summary Row (TOTAL / AVERAGE) */}
-            <tfoot className="bg-[#E2EBF4] text-[#042C51] text-xs font-bold border-t-2 border-[#CBD5E1]">
+            <tfoot className="bg-[#042C51] text-white text-xs font-bold border-t-2 border-[#031B33]">
               <tr>
-                <td colSpan={2} className="px-3 py-3 text-left font-black uppercase text-[#042C51] border-r border-[#CBD5E1]">
+                <td colSpan={2} className="px-3 py-3 text-left font-black uppercase text-[#7DD3FC] border-r border-[#063b6b]">
                   6-WEEK TOTAL / AVERAGE
                 </td>
 
-                <td className="px-3 py-3 text-right font-mono font-black text-[#042C51]">{forecastSummary.avgReq} (avg)</td>
-                <td className="px-3 py-3 text-right font-mono text-slate-700">{forecastSummary.avgAct} (avg)</td>
-                <td className="px-3 py-3 text-right font-mono font-black text-[#042C51]">{forecastSummary.avgNetAct} (avg)</td>
-                <td className={`px-3 py-3 text-right font-mono font-black ${forecastSummary.avgBuffer < 0 ? "text-[#E74C3C]" : "text-[#2ECC71]"}`}>
+                <td className="px-3 py-3 text-right font-mono font-black text-white">{forecastSummary.avgReq} (avg)</td>
+                <td className="px-3 py-3 text-right font-mono text-slate-200">{forecastSummary.avgAct} (avg)</td>
+                <td className="px-3 py-3 text-right font-mono font-black text-cyan-300">{forecastSummary.avgNetAct} (avg)</td>
+                <td className={`px-3 py-3 text-right font-mono font-black ${forecastSummary.avgBuffer < 0 ? "text-rose-300" : "text-emerald-300"}`}>
                   {forecastSummary.avgBuffer}%
                 </td>
-                <td className="px-3 py-3 text-right font-mono font-black text-[#E74C3C] border-r border-[#CBD5E1]">
+                <td className="px-3 py-3 text-right font-mono font-black text-rose-300 border-r border-[#063b6b]">
                   {forecastSummary.hiringNeededSum} (tot)
                 </td>
 
-                <td className="px-3 py-3 text-right font-mono text-slate-700">{forecastSummary.absSum} (tot)</td>
-                <td className="px-3 py-3 text-right font-mono font-black text-[#042C51]">{forecastSummary.avgAbsPct}%</td>
-                <td className="px-3 py-3 text-right font-mono text-slate-700">{forecastSummary.attSum} (tot)</td>
-                <td className="px-3 py-3 text-right font-mono font-black text-[#042C51] border-r border-[#CBD5E1]">{forecastSummary.avgAttPct}%</td>
+                <td className="px-3 py-3 text-right font-mono text-slate-200">{forecastSummary.absSum} (tot)</td>
+                <td className="px-3 py-3 text-right font-mono font-black text-amber-300">{forecastSummary.avgAbsPct}%</td>
+                <td className="px-3 py-3 text-right font-mono text-slate-200">{forecastSummary.attSum} (tot)</td>
+                <td className="px-3 py-3 text-right font-mono font-black text-amber-300 border-r border-[#063b6b]">{forecastSummary.avgAttPct}%</td>
 
-                <td className="px-3 py-3 text-right font-mono text-slate-700">{forecastSummary.accJOSum}</td>
-                <td className="px-3 py-3 text-right font-mono text-slate-700">{forecastSummary.nhoSum}</td>
-                <td className="px-3 py-3 text-right font-mono text-slate-700">{forecastSummary.fstSum}</td>
-                <td className="px-3 py-3 text-right font-mono text-slate-700">{forecastSummary.pstSum}</td>
-                <td className="px-3 py-3 text-right font-mono font-black text-emerald-700 border-r border-[#CBD5E1]">{forecastSummary.goLiveSum}</td>
+                <td className="px-3 py-3 text-right font-mono text-slate-200">{forecastSummary.accJOSum}</td>
+                <td className="px-3 py-3 text-right font-mono text-slate-200">{forecastSummary.nhoSum}</td>
+                <td className="px-3 py-3 text-right font-mono text-slate-200">{forecastSummary.fstSum}</td>
+                <td className="px-3 py-3 text-right font-mono text-slate-200">{forecastSummary.pstSum}</td>
+                <td className="px-3 py-3 text-right font-mono font-black text-emerald-300 border-r border-[#063b6b]">{forecastSummary.goLiveSum}</td>
 
-                <td className="px-3 py-3 text-right font-mono text-slate-700">{forecastSummary.avgHiringRate}%</td>
+                <td className="px-3 py-3 text-right font-mono text-slate-200">{forecastSummary.avgHiringRate}%</td>
                 <td className="px-3.5 py-3 text-right font-mono font-black text-[#FF5C28]">{forecastSummary.totalLeadsNeeded}</td>
               </tr>
             </tfoot>
@@ -1398,54 +1167,54 @@ export default function PlanSection({
           }`}
         >
           <table className="w-full text-left border-collapse text-xs whitespace-nowrap">
-            <thead className="bg-[#F8FAFC] text-[#042C51] text-[10px] font-bold uppercase tracking-wider sticky top-0 z-10 border-b border-[#CBD5E1] shadow-2xs">
+            <thead className="bg-[#042C51] text-white text-[10px] font-bold uppercase tracking-wider sticky top-0 z-10">
               {/* Category Grouping Row 1 */}
-              <tr className="border-b border-[#CBD5E1]">
-                <th colSpan={2} className="px-3 py-2 bg-[#E2EBF4] text-[#042C51] border-r border-[#CBD5E1] text-center font-black">
+              <tr className="border-b border-[#063b6b]">
+                <th colSpan={2} className="px-3 py-2 bg-[#031B33] text-[#7DD3FC] border-r border-[#063b6b] text-center font-black">
                   1. IDENTIFICATION & SCOPE
                 </th>
-                <th colSpan={5} className="px-3 py-2 bg-[#EEF4FB] text-[#042C51] border-r border-[#CBD5E1] text-center font-black">
+                <th colSpan={5} className="px-3 py-2 bg-[#042C51] text-[#A5F3FC] border-r border-[#063b6b] text-center font-black">
                   2. ACCOUNT CAPACITY & SHORTFALL AVERAGES
                 </th>
-                <th colSpan={4} className="px-3 py-2 bg-[#E2EBF4] text-[#042C51] border-r border-[#CBD5E1] text-center font-black">
+                <th colSpan={4} className="px-3 py-2 bg-[#031B33] text-[#7DD3FC] border-r border-[#063b6b] text-center font-black">
                   3. 6-WEEK CUMULATIVE LOSS TELEMETRY
                 </th>
-                <th colSpan={6} className="px-3 py-2 bg-[#EEF4FB] text-[#042C51] border-r border-[#CBD5E1] text-center font-black">
+                <th colSpan={6} className="px-3 py-2 bg-[#042C51] text-[#A5F3FC] border-r border-[#063b6b] text-center font-black">
                   4. ACCOUNT TRAINING FUNNEL & PLACEMENTS
                 </th>
-                <th colSpan={2} className="px-3 py-2 bg-[#E2EBF4] text-[#042C51] border-r border-[#CBD5E1] text-center font-black">
+                <th colSpan={2} className="px-3 py-2 bg-[#031B33] text-[#7DD3FC] border-r border-[#063b6b] text-center font-black">
                   5. YIELD & LEADS TARGET
                 </th>
-                <th className="px-3 py-2 bg-[#EEF4FB] text-[#042C51] text-center font-black">
+                <th className="px-3 py-2 bg-[#042C51] text-[#A5F3FC] text-center font-black">
                   6. ACTIONS
                 </th>
               </tr>
 
               {/* Individual Column Header Row 2 */}
-              <tr className="bg-[#F8FAFC] text-[10px] text-[#042C51]">
-                <th className="px-3 py-2.5 border-r border-[#CBD5E1]">Cluster</th>
-                <th className="px-3 py-2.5 border-r border-[#CBD5E1]">Account</th>
+              <tr className="bg-[#042C51] text-[10px]">
+                <th className="px-3 py-2.5 border-r border-[#063b6b]">Cluster</th>
+                <th className="px-3 py-2.5 border-r border-[#063b6b]">Account</th>
 
                 <th className="px-3 py-2.5 text-right">Required HC</th>
                 <th className="px-3 py-2.5 text-right">Actual HC</th>
                 <th className="px-3 py-2.5 text-right">Buffer %</th>
                 <th className="px-3 py-2.5 text-right">Net Actual HC</th>
-                <th className="px-3 py-2.5 text-right border-r border-[#CBD5E1]">Hiring Needed</th>
+                <th className="px-3 py-2.5 text-right border-r border-[#063b6b]">Hiring Needed</th>
 
                 <th className="px-3 py-2.5 text-right">Absenteeism (6 Wks)</th>
                 <th className="px-3 py-2.5 text-right">Abs Rate %</th>
                 <th className="px-3 py-2.5 text-right">Attrition (6 Wks)</th>
-                <th className="px-3 py-2.5 text-right border-r border-[#CBD5E1]">Att Rate %</th>
+                <th className="px-3 py-2.5 text-right border-r border-[#063b6b]">Att Rate %</th>
 
                 <th className="px-3 py-2.5 text-right">Accepted JO</th>
                 <th className="px-3 py-2.5 text-right">NHO Count</th>
                 <th className="px-3 py-2.5 text-right">FST Count</th>
                 <th className="px-3 py-2.5 text-right">PST Count</th>
-                <th className="px-3 py-2.5 text-right font-bold text-emerald-700">Go Live</th>
-                <th className="px-3 py-2.5 text-right font-bold text-emerald-700 border-r border-[#CBD5E1]">Hired Count</th>
+                <th className="px-3 py-2.5 text-right text-emerald-300">Go Live</th>
+                <th className="px-3 py-2.5 text-right text-emerald-300 border-r border-[#063b6b]">Hired Count</th>
 
                 <th className="px-3 py-2.5 text-right">Hiring Rate %</th>
-                <th className="px-3 py-2.5 text-right border-r border-[#CBD5E1]">Target Leads</th>
+                <th className="px-3 py-2.5 text-right border-r border-[#063b6b]">Target Leads</th>
 
                 <th className="px-3.5 py-2.5 text-center">Action</th>
               </tr>
@@ -1541,39 +1310,39 @@ export default function PlanSection({
             </tbody>
 
             {/* Table 2 Summary Row (TOTAL / AVERAGE) */}
-            <tfoot className="bg-[#E2EBF4] text-[#042C51] text-xs font-bold border-t-2 border-[#CBD5E1]">
+            <tfoot className="bg-[#042C51] text-white text-xs font-bold border-t-2 border-[#031B33]">
               <tr>
-                <td colSpan={2} className="px-3 py-3 text-left font-black uppercase text-[#042C51] border-r border-[#CBD5E1]">
+                <td colSpan={2} className="px-3 py-3 text-left font-black uppercase text-[#7DD3FC] border-r border-[#063b6b]">
                   TOTAL / AVERAGE ({filteredPlans.length} ACCOUNTS)
                 </td>
 
-                <td className="px-3 py-3 text-right font-mono font-black text-[#042C51]">{accountsSummary.requiredHC}</td>
-                <td className="px-3 py-3 text-right font-mono text-slate-700">{accountsSummary.actualHC}</td>
-                <td className={`px-3 py-3 text-right font-mono font-black ${accountsSummary.bufferPct < 0 ? "text-[#E74C3C]" : "text-[#2ECC71]"}`}>
+                <td className="px-3 py-3 text-right font-mono font-black text-white">{accountsSummary.requiredHC}</td>
+                <td className="px-3 py-3 text-right font-mono text-slate-200">{accountsSummary.actualHC}</td>
+                <td className={`px-3 py-3 text-right font-mono font-black ${accountsSummary.bufferPct < 0 ? "text-rose-300" : "text-emerald-300"}`}>
                   {accountsSummary.bufferPct}%
                 </td>
-                <td className="px-3 py-3 text-right font-mono font-black text-[#042C51]">{accountsSummary.netActualHC}</td>
-                <td className="px-3 py-3 text-right font-mono font-black text-[#E74C3C] border-r border-[#CBD5E1]">
+                <td className="px-3 py-3 text-right font-mono font-black text-cyan-300">{accountsSummary.netActualHC}</td>
+                <td className="px-3 py-3 text-right font-mono font-black text-rose-300 border-r border-[#063b6b]">
                   {accountsSummary.hiringNeeded}
                 </td>
 
-                <td className="px-3 py-3 text-right font-mono text-slate-700">{accountsSummary.absenteeism6Wks}</td>
-                <td className="px-3 py-3 text-right font-mono font-black text-[#042C51]">{accountsSummary.absenteeismRatePct}%</td>
-                <td className="px-3 py-3 text-right font-mono text-slate-700">{accountsSummary.attrition6Wks}</td>
-                <td className="px-3 py-3 text-right font-mono font-black text-[#042C51] border-r border-[#CBD5E1]">{accountsSummary.attritionRatePct}%</td>
+                <td className="px-3 py-3 text-right font-mono text-slate-200">{accountsSummary.absenteeism6Wks}</td>
+                <td className="px-3 py-3 text-right font-mono font-black text-amber-300">{accountsSummary.absenteeismRatePct}%</td>
+                <td className="px-3 py-3 text-right font-mono text-slate-200">{accountsSummary.attrition6Wks}</td>
+                <td className="px-3 py-3 text-right font-mono font-black text-amber-300 border-r border-[#063b6b]">{accountsSummary.attritionRatePct}%</td>
 
-                <td className="px-3 py-3 text-right font-mono text-slate-700">{accountsSummary.acceptedJO}</td>
-                <td className="px-3 py-3 text-right font-mono text-slate-700">{accountsSummary.nho}</td>
-                <td className="px-3 py-3 text-right font-mono text-slate-700">{accountsSummary.fst}</td>
-                <td className="px-3 py-3 text-right font-mono text-slate-700">{accountsSummary.pst}</td>
-                <td className="px-3 py-3 text-right font-mono font-black text-emerald-700">{accountsSummary.goLive}</td>
-                <td className="px-3 py-3 text-right font-mono font-black text-emerald-700 border-r border-[#CBD5E1]">{accountsSummary.hiredCount}</td>
+                <td className="px-3 py-3 text-right font-mono text-slate-200">{accountsSummary.acceptedJO}</td>
+                <td className="px-3 py-3 text-right font-mono text-slate-200">{accountsSummary.nho}</td>
+                <td className="px-3 py-3 text-right font-mono text-slate-200">{accountsSummary.fst}</td>
+                <td className="px-3 py-3 text-right font-mono text-slate-200">{accountsSummary.pst}</td>
+                <td className="px-3 py-3 text-right font-mono font-black text-emerald-300">{accountsSummary.goLive}</td>
+                <td className="px-3 py-3 text-right font-mono font-black text-emerald-300 border-r border-[#063b6b]">{accountsSummary.hiredCount}</td>
 
-                <td className="px-3 py-3 text-right font-mono text-slate-700">{accountsSummary.hiringRatePct}%</td>
-                <td className="px-3 py-3 text-right font-mono font-black text-[#FF5C28] border-r border-[#CBD5E1]">{accountsSummary.leadsNeeded}</td>
+                <td className="px-3 py-3 text-right font-mono text-slate-200">{accountsSummary.hiringRatePct}%</td>
+                <td className="px-3 py-3 text-right font-mono font-black text-[#FF5C28] border-r border-[#063b6b]">{accountsSummary.leadsNeeded}</td>
 
                 <td className="px-3.5 py-3 text-center">
-                  <span className="px-2 py-0.5 text-[9px] font-black rounded uppercase bg-[#042C51] text-white">
+                  <span className="px-2 py-0.5 text-[9px] font-black rounded uppercase bg-[#063b6b] text-white">
                     Summary
                   </span>
                 </td>
@@ -1587,7 +1356,7 @@ export default function PlanSection({
       {/* Component: AIInsightModal */}
       {isAiModalOpen && (
         <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-xs flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-2xl w-full overflow-hidden animate-in fade-in zoom-in-95 duration-150 flex flex-col max-h-[90vh]">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full overflow-hidden animate-in fade-in zoom-in-95 duration-150 flex flex-col max-h-[90vh]">
             {/* Modal Header */}
             <div className="bg-[#042C51] text-white px-5 py-4 flex items-center justify-between">
               <div className="flex items-center gap-2.5">
@@ -1687,7 +1456,7 @@ export default function PlanSection({
       {/* Component: KPISnapshotModal */}
       {isKpiModalOpen && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-xl w-full overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-xl w-full overflow-hidden animate-in fade-in zoom-in-95 duration-150">
             <div className="bg-[#042C51] text-white px-5 py-4 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Info className="w-5 h-5 text-[#7DD3FC]" />
@@ -1832,199 +1601,72 @@ export default function PlanSection({
       {/* ==================== 4. WEEKLY ACCOUNT DRILL-DOWN MODAL ==================== */}
       {/* Component: ForecastWeekAccountDetailsModal */}
       {selectedWeekDetails && (
-        <div className="fixed inset-0 bg-[#042C51]/80 backdrop-blur-md flex items-center justify-center z-50 p-3 sm:p-5 overflow-y-auto animate-in fade-in zoom-in-95 duration-150">
-          <div className="bg-[#F8FAFC] w-full max-w-7xl rounded-2xl shadow-2xl border border-slate-200 flex flex-col max-h-[92vh] overflow-hidden my-auto">
-            {/* Modal Header */}
-            <div className="bg-[#042C51] text-white px-6 py-4 flex flex-wrap items-center justify-between shrink-0 border-b border-slate-700 gap-4">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-[#FF5C28] flex items-center justify-center text-white shadow-md shrink-0">
-                  <BarChart2 className="w-5 h-5" />
+        <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-xs flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-2xl w-full overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+            <div className="bg-[#042C51] text-white px-5 py-4 flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-bold flex items-center gap-2">
+                  <span>{selectedWeekDetails.weekLabel} Unit-Level Account Drill-Down</span>
+                  <span className="px-2 py-0.5 text-[9px] font-black bg-blue-500 text-white rounded">
+                    {selectedWeekDetails.dateRange}
+                  </span>
+                </h3>
+                <p className="text-[11px] text-slate-300 mt-0.5">Shift schedules, attendance roster & enrolled candidate cohorts.</p>
+              </div>
+              <button onClick={() => setSelectedWeekDetails(null)} className="text-slate-300 hover:text-white p-1.5 rounded-lg bg-slate-800">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="p-5 space-y-4 text-xs">
+              <div className="grid grid-cols-3 gap-3 bg-slate-50 p-3 rounded-xl border border-slate-200 text-center">
+                <div>
+                  <span className="text-[10px] text-slate-400 font-bold uppercase block">Required</span>
+                  <span className="text-base font-black text-[#042C51] font-mono">{selectedWeekDetails.requiredHC}</span>
                 </div>
                 <div>
-                  <div className="flex items-center gap-2.5 flex-wrap">
-                    <h3 className="text-base font-black tracking-wide uppercase text-white">
-                      Forecast Week Details
-                    </h3>
-                    <span className="text-slate-400 font-bold">|</span>
-                    <span className="text-xs font-bold text-slate-300">
-                      Account / Cluster Breakdown
-                    </span>
-                    <span className="px-2.5 py-0.5 text-[10px] font-black bg-[#FF5C28] text-white rounded-full uppercase tracking-wider shadow-2xs">
-                      {filteredModalRecords.length} of {INITIAL_DETAIL_RECORDS.length} rows
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2 text-xs font-mono text-slate-300 mt-1">
-                    <span className="font-extrabold text-blue-300">{selectedWeekDetails.weekLabel} | {selectedWeekDetails.dateRange}</span>
-                    <span className="text-slate-500">•</span>
-                    <span className="text-slate-300 font-medium text-[11px]">Forecast basis: 2026-06-01 to 2026-07-06</span>
-                  </div>
+                  <span className="text-[10px] text-slate-400 font-bold uppercase block">Actual Staff</span>
+                  <span className="text-base font-black text-slate-800 font-mono">{selectedWeekDetails.actualHC}</span>
                 </div>
-              </div>
-
-              <button
-                onClick={() => setSelectedWeekDetails(null)}
-                className="p-2 rounded-xl bg-white/10 hover:bg-white/20 text-slate-300 hover:text-white transition-all cursor-pointer"
-                title="Close Modal"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            {/* Banner & Search Control Bar */}
-            <div className="bg-white px-6 py-3 border-b border-[#E6ECF2] shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 shrink-0">
-              <div className="flex items-center gap-2 text-xs font-black text-[#042C51] uppercase tracking-wider">
-                <Info className="w-4 h-4 text-[#FF5C28] shrink-0" />
-                <span>CLICKED FORECAST WEEK ROWS ARE SHOWN PER ACCOUNT AND CLUSTER.</span>
-              </div>
-
-              <div className="flex items-center gap-3">
-                <div className="relative w-full sm:w-72">
-                  <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-2.5" />
-                  <input
-                    type="text"
-                    placeholder="Search cluster or account..."
-                    value={modalSearchQuery}
-                    onChange={(e) => setModalSearchQuery(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-9 pr-8 py-1.5 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-[#042C51] transition-all"
-                  />
-                  {modalSearchQuery && (
-                    <button
-                      onClick={() => setModalSearchQuery("")}
-                      className="absolute right-2.5 top-2.5 text-slate-400 hover:text-slate-600"
-                    >
-                      <X className="w-3.5 h-3.5" />
-                    </button>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* Modal Body: Scrollable Table Container */}
-            <div className="p-5 overflow-y-auto space-y-4 flex-1">
-              <div className="overflow-x-auto border border-[#E6ECF2] rounded-2xl shadow-2xs max-h-[55vh] overflow-y-auto bg-white">
-                <table className="w-full text-left border-collapse text-xs whitespace-nowrap">
-                  <thead className="bg-[#F8FAFC] text-[#042C51] font-bold uppercase text-[10px] tracking-wider sticky top-0 z-10 border-b border-[#CBD5E1] shadow-2xs">
-                    <tr>
-                      <th className="px-3.5 py-3 border-r border-[#CBD5E1]">CLUSTER</th>
-                      <th className="px-3.5 py-3 border-r border-[#CBD5E1]">ACCOUNT</th>
-                      <th className="px-3 py-3 text-right border-r border-[#CBD5E1]">REQUIRED HC</th>
-                      <th className="px-3 py-3 text-right border-r border-[#CBD5E1]">ACTUAL HC</th>
-                      <th className="px-3 py-3 text-right border-r border-[#CBD5E1]">BUFFER %</th>
-                      <th className="px-3.5 py-3 text-right border-r border-[#CBD5E1]">ABSENTEEISM</th>
-                      <th className="px-3.5 py-3 text-right border-r border-[#CBD5E1]">ATTRITION</th>
-                      <th className="px-3 py-3 text-right border-r border-[#CBD5E1]">NET ACTUAL HC</th>
-                      <th className="px-3 py-3 text-right border-r border-[#CBD5E1]">HIRING NEEDED</th>
-                      <th className="px-3 py-3 text-center border-r border-[#CBD5E1]">ACCEPTED JO</th>
-                      <th className="px-3 py-3 text-center border-r border-[#CBD5E1]">NHO COUNT</th>
-                      <th className="px-3 py-3 text-center border-r border-[#CBD5E1]">FST COUNT</th>
-                      <th className="px-3 py-3 text-center border-r border-[#CBD5E1]">PST COUNT</th>
-                      <th className="px-3 py-3 text-center border-r border-[#CBD5E1]">GO LIVE</th>
-                      <th className="px-3 py-3 text-right">HIRED COUNT</th>
-                    </tr>
-                  </thead>
-
-                  <tbody className="divide-y divide-[#E6ECF2] bg-white font-medium text-slate-700">
-                    {filteredModalRecords.length === 0 ? (
-                      <tr>
-                        <td colSpan={15} className="px-4 py-12 text-center text-slate-400 font-semibold">
-                          No matching account or cluster records found for "{modalSearchQuery}".
-                        </td>
-                      </tr>
-                    ) : (
-                      filteredModalRecords.map((rec, idx) => {
-                        const isDeficit = rec.bufferPercentage < 0;
-                        return (
-                          <tr key={rec.id || idx} className="hover:bg-slate-50/80 transition-colors">
-                            <td className="px-3.5 py-2.5 font-semibold text-slate-600 border-r border-[#E6ECF2]">
-                              {rec.cluster}
-                            </td>
-                            <td className="px-3.5 py-2.5 font-bold text-[#042C51] border-r border-[#E6ECF2]">
-                              {rec.account}
-                            </td>
-                            <td className="px-3 py-2.5 text-right font-mono font-bold text-[#042C51] border-r border-[#E6ECF2]">
-                              {rec.requiredHC}
-                            </td>
-                            <td className="px-3 py-2.5 text-right font-mono text-slate-700 border-r border-[#E6ECF2]">
-                              {rec.actualHC}
-                            </td>
-                            <td className="px-3 py-2.5 text-right font-mono font-bold border-r border-[#E6ECF2]">
-                              <span className={isDeficit ? "text-rose-600 font-black" : "text-emerald-600 font-black"}>
-                                {rec.bufferPercentage.toFixed(2)}%
-                              </span>
-                            </td>
-                            <td className="px-3.5 py-2.5 text-right font-mono text-slate-700 border-r border-[#E6ECF2]">
-                              {rec.absenteeismCount} <span className="text-[10px] text-slate-400">({rec.absenteeismPercentage.toFixed(1)}%)</span>
-                            </td>
-                            <td className="px-3.5 py-2.5 text-right font-mono text-slate-700 border-r border-[#E6ECF2]">
-                              {rec.attritionCount} <span className="text-[10px] text-slate-400">({rec.attritionPercentage.toFixed(1)}%)</span>
-                            </td>
-                            <td className="px-3 py-2.5 text-right font-mono font-black text-[#042C51] border-r border-[#E6ECF2]">
-                              {rec.netActualHC}
-                            </td>
-                            <td className="px-3 py-2.5 text-right font-mono font-bold border-r border-[#E6ECF2]">
-                              {rec.hiringNeeded > 0 ? (
-                                <span className="bg-rose-50 text-rose-600 px-2 py-0.5 rounded font-black border border-rose-100 shadow-2xs">
-                                  {rec.hiringNeeded}
-                                </span>
-                              ) : (
-                                <span className="text-slate-400">0</span>
-                              )}
-                            </td>
-                            <td className="px-3 py-2.5 text-center font-mono font-bold text-slate-800 border-r border-[#E6ECF2]">
-                              {rec.acceptedJO}
-                            </td>
-                            <td className="px-3 py-2.5 text-center font-mono text-slate-700 border-r border-[#E6ECF2]">
-                              {rec.nho}
-                            </td>
-                            <td className="px-3 py-2.5 text-center font-mono text-slate-700 border-r border-[#E6ECF2]">
-                              {rec.fst}
-                            </td>
-                            <td className="px-3 py-2.5 text-center font-mono text-slate-700 border-r border-[#E6ECF2]">
-                              {rec.pst}
-                            </td>
-                            <td className="px-3 py-2.5 text-center font-mono font-bold text-emerald-600 border-r border-[#E6ECF2]">
-                              {rec.goLive}
-                            </td>
-                            <td className="px-3 py-2.5 text-right font-mono font-extrabold text-[#042C51]">
-                              {rec.hiredCount}
-                            </td>
-                          </tr>
-                        );
-                      })
-                    )}
-                  </tbody>
-                </table>
-              </div>
-
-              {/* Table Footer Summary Card */}
-              <div className="bg-[#F8FAFC] p-3.5 rounded-2xl border border-slate-200 flex flex-wrap items-center justify-between text-xs font-extrabold text-slate-700 gap-3">
-                <div className="flex items-center gap-2">
-                  <span className="text-slate-500 font-bold">Total Filtered Accounts:</span>
-                  <span className="bg-white px-2.5 py-1 rounded-lg border border-slate-300 font-mono font-black text-[#042C51]">
-                    {filteredModalRecords.length} Accounts
+                <div>
+                  <span className="text-[10px] text-slate-400 font-bold uppercase block">Open Gap</span>
+                  <span className="text-base font-black text-rose-600 font-mono">
+                    {Math.max(0, selectedWeekDetails.requiredHC - (selectedWeekDetails.actualHC - selectedWeekDetails.absenteeismCount - selectedWeekDetails.attritionCount))}
                   </span>
                 </div>
-                <div className="flex items-center gap-4 font-mono text-[11px] flex-wrap">
-                  <span>Total Req HC: <strong className="text-[#042C51] text-xs font-black">{filteredModalRecords.reduce((acc, r) => acc + r.requiredHC, 0)}</strong></span>
-                  <span>Total Act HC: <strong className="text-slate-800 text-xs font-black">{filteredModalRecords.reduce((acc, r) => acc + r.actualHC, 0)}</strong></span>
-                  <span>Net Act HC: <strong className="text-[#042C51] text-xs font-black">{filteredModalRecords.reduce((acc, r) => acc + r.netActualHC, 0)}</strong></span>
-                  <span>Hiring Needed: <strong className="text-rose-600 text-xs font-black">{filteredModalRecords.reduce((acc, r) => acc + r.hiringNeeded, 0)}</strong></span>
-                  <span>Total Deployed: <strong className="text-emerald-700 text-xs font-black">{filteredModalRecords.reduce((acc, r) => acc + r.goLive, 0)}</strong></span>
+              </div>
+
+              {/* Cohort Pipeline */}
+              <div className="space-y-2">
+                <h4 className="font-extrabold text-[#042C51]">Enrolled Milestone Cohorts ({selectedWeekDetails.weekLabel})</h4>
+                <div className="grid grid-cols-4 gap-2 text-center text-[11px]">
+                  <div className="bg-blue-50 p-2.5 rounded-lg border border-blue-100">
+                    <span className="text-slate-500 font-bold block">NHO</span>
+                    <span className="text-sm font-black text-blue-900 font-mono">{selectedWeekDetails.nho}</span>
+                  </div>
+                  <div className="bg-purple-50 p-2.5 rounded-lg border border-purple-100">
+                    <span className="text-slate-500 font-bold block">FST</span>
+                    <span className="text-sm font-black text-purple-900 font-mono">{selectedWeekDetails.fst}</span>
+                  </div>
+                  <div className="bg-amber-50 p-2.5 rounded-lg border border-amber-100">
+                    <span className="text-slate-500 font-bold block">PST</span>
+                    <span className="text-sm font-black text-amber-900 font-mono">{selectedWeekDetails.pst}</span>
+                  </div>
+                  <div className="bg-emerald-50 p-2.5 rounded-lg border border-emerald-100">
+                    <span className="text-slate-500 font-bold block">Go Live</span>
+                    <span className="text-sm font-black text-emerald-900 font-mono">{selectedWeekDetails.goLive}</span>
+                  </div>
                 </div>
               </div>
-            </div>
 
-            {/* Modal Footer */}
-            <div className="bg-white px-6 py-3 border-t border-slate-200 flex items-center justify-between shrink-0">
-              <span className="text-xs text-slate-400 font-medium">
-                SiBS Headcount Intelligence • {selectedWeekDetails.weekLabel} Breakdown
-              </span>
-              <button
-                onClick={() => setSelectedWeekDetails(null)}
-                className="px-5 py-2 bg-[#042C51] hover:bg-[#031d36] text-white font-bold rounded-xl text-xs transition-colors shadow-md cursor-pointer"
-              >
-                Close Inspection
-              </button>
+              <div className="pt-3 border-t flex justify-end">
+                <button
+                  onClick={() => setSelectedWeekDetails(null)}
+                  className="px-4 py-2 bg-[#042C51] text-white font-bold rounded-xl"
+                >
+                  Close Inspection
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -2265,584 +1907,6 @@ export default function PlanSection({
                 </button>
               </div>
             </form>
-          </div>
-        </div>
-      )}
-
-      {/* ==================== TECHNICAL REVIEW & SYSTEM ARCHITECTURE MODAL ==================== */}
-      {isArchitectureModalOpen && (
-        <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center z-50 p-3 sm:p-5">
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-5xl w-full overflow-hidden animate-in fade-in zoom-in-95 duration-150 flex flex-col max-h-[92vh]">
-            {/* Modal Header */}
-            <div className="bg-[#042C51] text-white px-6 py-4 flex items-center justify-between border-b border-[#063b6b] shrink-0">
-              <div className="flex items-center gap-3">
-                <div className="p-2.5 bg-gradient-to-tr from-[#FF5C28] to-amber-500 rounded-xl shadow-md">
-                  <BookOpen className="w-5 h-5 text-white" />
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h3 className="text-base font-black tracking-wide text-white">
-                      Workforce & Hiring Plan — Technical Review & System Architecture
-                    </h3>
-                    <span className="px-2 py-0.5 text-[9px] font-black bg-[#FF5C28] text-white rounded-full uppercase tracking-wider">
-                      v2.4 Spec
-                    </span>
-                  </div>
-                  <p className="text-xs text-slate-300 mt-0.5">
-                    Operational workflows, cross-system data flows, metric formulas, API contracts & architectural audit.
-                  </p>
-                </div>
-              </div>
-              <button
-                onClick={() => setIsArchitectureModalOpen(false)}
-                className="text-slate-300 hover:text-white p-2 rounded-xl bg-[#031B33] border border-[#063b6b] hover:border-slate-500 transition-all"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            {/* Navigation Tabs */}
-            <div className="bg-[#031B33] px-6 py-2 border-b border-[#063b6b] flex flex-wrap items-center gap-2 shrink-0">
-              <button
-                onClick={() => setActiveArchTab("process")}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
-                  activeArchTab === "process"
-                    ? "bg-[#FF5C28] text-white shadow-sm"
-                    : "text-slate-300 hover:bg-[#042C51] hover:text-white"
-                }`}
-              >
-                <Workflow className="w-3.5 h-3.5" />
-                <span>1. Process & Purpose</span>
-              </button>
-
-              <button
-                onClick={() => setActiveArchTab("relationships")}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
-                  activeArchTab === "relationships"
-                    ? "bg-[#FF5C28] text-white shadow-sm"
-                    : "text-slate-300 hover:bg-[#042C51] hover:text-white"
-                }`}
-              >
-                <Network className="w-3.5 h-3.5" />
-                <span>2. Cross-System Map</span>
-              </button>
-
-              <button
-                onClick={() => setActiveArchTab("api")}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
-                  activeArchTab === "api"
-                    ? "bg-[#FF5C28] text-white shadow-sm"
-                    : "text-slate-300 hover:bg-[#042C51] hover:text-white"
-                }`}
-              >
-                <Code className="w-3.5 h-3.5" />
-                <span>3. API Contracts</span>
-              </button>
-
-              <button
-                onClick={() => setActiveArchTab("formulas")}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
-                  activeArchTab === "formulas"
-                    ? "bg-[#FF5C28] text-white shadow-sm"
-                    : "text-slate-300 hover:bg-[#042C51] hover:text-white"
-                }`}
-              >
-                <BarChart2 className="w-3.5 h-3.5" />
-                <span>4. Metric Catalog</span>
-              </button>
-
-              <button
-                onClick={() => setActiveArchTab("filters")}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
-                  activeArchTab === "filters"
-                    ? "bg-[#FF5C28] text-white shadow-sm"
-                    : "text-slate-300 hover:bg-[#042C51] hover:text-white"
-                }`}
-              >
-                <Filter className="w-3.5 h-3.5" />
-                <span>5. Filters & Tables</span>
-              </button>
-
-              <button
-                onClick={() => setActiveArchTab("audit")}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
-                  activeArchTab === "audit"
-                    ? "bg-[#FF5C28] text-white shadow-sm"
-                    : "text-slate-300 hover:bg-[#042C51] hover:text-white"
-                }`}
-              >
-                <ShieldAlert className="w-3.5 h-3.5" />
-                <span>6. Modals & Tech Audit</span>
-              </button>
-            </div>
-
-            {/* Modal Body Content */}
-            <div className="p-6 overflow-y-auto flex-1 text-xs space-y-6 bg-[#F8FAFC]">
-              {/* TAB 1: PROCESS & PURPOSE */}
-              {activeArchTab === "process" && (
-                <div className="space-y-5 animate-in fade-in duration-150">
-                  <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs space-y-2">
-                    <h4 className="text-sm font-black text-[#042C51] flex items-center gap-2">
-                      <Workflow className="w-4 h-4 text-[#FF5C28]" />
-                      Core Operational Purpose
-                    </h4>
-                    <p className="text-slate-600 leading-relaxed text-xs">
-                      The Workforce & Hiring Plan module serves as the primary operational forecasting engine for contact center capacity, staffing gaps, training pipeline throughput, and recruitment sourcing targets.
-                    </p>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2">
-                      <div className="p-3 bg-slate-50 rounded-lg border border-slate-200">
-                        <strong className="text-[#042C51] font-bold block mb-1">1. Contractual vs. Floor Capacity</strong>
-                        <p className="text-slate-600 text-[11px]">Compares approved client headcount baselines (Required HC) against live agent availability (Actual Roster) less floor absenteeism.</p>
-                      </div>
-                      <div className="p-3 bg-slate-50 rounded-lg border border-slate-200">
-                        <strong className="text-[#042C51] font-bold block mb-1">2. Shortfall & Buffer Modeling</strong>
-                        <p className="text-slate-600 text-[11px]">Computes Net Actual HC and Buffer % Cushion to trigger immediate hiring shortfall alerts (Hiring Needed).</p>
-                      </div>
-                      <div className="p-3 bg-slate-50 rounded-lg border border-slate-200">
-                        <strong className="text-[#042C51] font-bold block mb-1">3. 5-Stage Training Pipeline</strong>
-                        <p className="text-slate-600 text-[11px]">Tracks candidate conversion through: Accepted JO ➔ NHO ➔ FST ➔ PST ➔ Go Live Deployed.</p>
-                      </div>
-                      <div className="p-3 bg-slate-50 rounded-lg border border-slate-200">
-                        <strong className="text-[#042C51] font-bold block mb-1">4. Yield-Based Lead Targets</strong>
-                        <p className="text-slate-600 text-[11px]">Calculates required applicant lead volumes (Target Leads Needed) based on historical recruitment yield rates.</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* End-to-End Operational Workflow Diagram */}
-                  <div className="bg-[#042C51] text-white p-5 rounded-xl border border-[#063b6b] space-y-4">
-                    <h4 className="text-xs font-black uppercase tracking-wider text-[#7DD3FC] flex items-center gap-2">
-                      <GitBranch className="w-4 h-4 text-[#FF5C28]" />
-                      End-to-End Operational Workflow Process Diagram
-                    </h4>
-
-                    <div className="space-y-3 font-mono text-[11px]">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <div className="bg-[#031B33] px-3 py-2 rounded-lg border border-[#063b6b] text-sky-300 font-bold">
-                          [A] Capacity Baseline (Required HC)
-                        </div>
-                        <span className="text-amber-400 font-bold">➔</span>
-                        <div className="bg-[#031B33] px-3 py-2 rounded-lg border border-[#063b6b] text-white font-bold">
-                          [B] Active Roster Count (Actual HC)
-                        </div>
-                        <span className="text-amber-400 font-bold">➔</span>
-                        <div className="bg-[#031B33] px-3 py-2 rounded-lg border border-[#063b6b] text-rose-300 font-bold">
-                          [C] Less Absenteeism Count
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-amber-400 font-bold">➔</span>
-                        <div className="bg-[#031B33] px-3 py-2 rounded-lg border border-[#063b6b] text-emerald-300 font-bold">
-                          [D] Net Actual HC = Actual - Abs
-                        </div>
-                        <span className="text-amber-400 font-bold">➔</span>
-                        <div className="bg-[#031B33] px-3 py-2 rounded-lg border border-[#063b6b] text-purple-300 font-bold">
-                          [E] Buffer % Cushion = ((Net - Req)/Req)*100
-                        </div>
-                      </div>
-
-                      <div className="p-3 bg-[#031B33] rounded-lg border border-[#063b6b] text-slate-200">
-                        <span className="text-amber-400 font-bold block mb-1">[F] Shortfall Evaluation Logic:</span>
-                        <p className="text-slate-300">
-                          If Net Actual &lt; Required HC ➔ <span className="text-rose-400 font-bold">Hiring Needed = Required HC - Net Actual</span><br />
-                          Else ➔ <span className="text-emerald-400 font-bold">Hiring Needed = 0 (Surplus / Compliant)</span>
-                        </p>
-                      </div>
-
-                      <div className="flex items-center gap-2 flex-wrap pt-1">
-                        <div className="bg-[#031B33] px-3 py-2 rounded-lg border border-[#063b6b] text-amber-300 font-bold">
-                          [G] 5-Stage Training Pipeline: JO ➔ NHO ➔ FST ➔ PST ➔ Go Live
-                        </div>
-                        <span className="text-amber-400 font-bold">➔</span>
-                        <div className="bg-[#031B33] px-3 py-2 rounded-lg border border-[#063b6b] text-purple-300 font-bold">
-                          [H] Target Leads = Required Hires / Yield Rate
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* TAB 2: CROSS-SYSTEM MAP */}
-              {activeArchTab === "relationships" && (
-                <div className="space-y-5 animate-in fade-in duration-150">
-                  <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs space-y-3">
-                    <h4 className="text-sm font-black text-[#042C51] flex items-center gap-2">
-                      <Network className="w-4 h-4 text-[#FF5C28]" />
-                      Cross-Module Data Flow &amp; Inter-Module System Relationships
-                    </h4>
-                    <p className="text-slate-600 leading-relaxed text-xs">
-                      The Workforce &amp; Hiring Plan interacts continuously with six adjacent HR and Talent Acquisition modules across the application architecture:
-                    </p>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2">
-                      <div className="p-3.5 bg-[#F1F5F9] rounded-xl border border-slate-200 space-y-1">
-                        <span className="text-[10px] font-black uppercase text-[#042C51] bg-blue-100 px-2 py-0.5 rounded">
-                          Hiring Needs Intake / Requisitions
-                        </span>
-                        <h5 className="font-bold text-slate-800 text-xs mt-1">Target Capacity Baseline</h5>
-                        <p className="text-slate-600 text-[11px]">Supplies the target capacity demand (<strong className="text-[#042C51]">Required HC</strong>) agreed upon in client SOWs.</p>
-                      </div>
-
-                      <div className="p-3.5 bg-[#F1F5F9] rounded-xl border border-slate-200 space-y-1">
-                        <span className="text-[10px] font-black uppercase text-[#042C51] bg-amber-100 px-2 py-0.5 rounded">
-                          Employee Directory &amp; Attendance
-                        </span>
-                        <h5 className="font-bold text-slate-800 text-xs mt-1">Live Active Roster &amp; Telemetry</h5>
-                        <p className="text-slate-600 text-[11px]">Feeds active agent headcount (<strong className="text-[#042C51]">Actual HC</strong>) and daily floor absence records (<strong className="text-[#042C51]">Absenteeism</strong>).</p>
-                      </div>
-
-                      <div className="p-3.5 bg-[#F1F5F9] rounded-xl border border-slate-200 space-y-1">
-                        <span className="text-[10px] font-black uppercase text-[#042C51] bg-purple-100 px-2 py-0.5 rounded">
-                          Candidate Pipeline &amp; Talent Pool
-                        </span>
-                        <h5 className="font-bold text-slate-800 text-xs mt-1">Training Pipeline Telemetry</h5>
-                        <p className="text-slate-600 text-[11px]">Feeds conversion counts (<strong className="text-[#042C51]">Accepted JO, NHO, FST, PST, Go Live</strong>) to measure stage drop-offs.</p>
-                      </div>
-
-                      <div className="p-3.5 bg-[#F1F5F9] rounded-xl border border-slate-200 space-y-1">
-                        <span className="text-[10px] font-black uppercase text-[#042C51] bg-rose-100 px-2 py-0.5 rounded">
-                          Resignation &amp; Attrition Management
-                        </span>
-                        <h5 className="font-bold text-slate-800 text-xs mt-1">Agent Exit Telemetry</h5>
-                        <p className="text-slate-600 text-[11px]">Reports headcount losses (<strong className="text-rose-700">Attrition Count &amp; %</strong>) from agent exits during production or training.</p>
-                      </div>
-
-                      <div className="p-3.5 bg-[#F1F5F9] rounded-xl border border-slate-200 space-y-1">
-                        <span className="text-[10px] font-black uppercase text-[#042C51] bg-emerald-100 px-2 py-0.5 rounded">
-                          Action Items &amp; Task Management
-                        </span>
-                        <h5 className="font-bold text-slate-800 text-xs mt-1">Remediation Scheduling</h5>
-                        <p className="text-slate-600 text-[11px]">Integrates via <strong className="text-[#042C51]">ActionItemModal</strong> to assign tasks to leads when buffer thresholds are violated.</p>
-                      </div>
-
-                      <div className="p-3.5 bg-[#F1F5F9] rounded-xl border border-slate-200 space-y-1">
-                        <span className="text-[10px] font-black uppercase text-[#042C51] bg-sky-100 px-2 py-0.5 rounded">
-                          Weekly Reports &amp; Executive Analytics
-                        </span>
-                        <h5 className="font-bold text-slate-800 text-xs mt-1">Snapshot Aggregation</h5>
-                        <p className="text-slate-600 text-[11px]">Consolidates locked 6-week forecast snapshots into executive dashboards for C-level workforce reporting.</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* TAB 3: API CONTRACTS */}
-              {activeArchTab === "api" && (
-                <div className="space-y-5 animate-in fade-in duration-150">
-                  <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs space-y-3">
-                    <h4 className="text-sm font-black text-[#042C51] flex items-center gap-2">
-                      <Code className="w-4 h-4 text-[#FF5C28]" />
-                      Data Flow Architecture &amp; Backend API Endpoint Contracts
-                    </h4>
-                    <p className="text-slate-600 leading-relaxed text-xs">
-                      Fetched via endpoint adapters in <code className="bg-slate-100 px-1 py-0.5 rounded text-[#042C51] font-mono">src/lib/axios/getWorkforceHiringPlan.js</code> using cookie-authenticated Axios:
-                    </p>
-
-                    <div className="space-y-3 pt-1">
-                      {/* Contract 1 */}
-                      <div className="bg-[#031B33] text-slate-200 p-3.5 rounded-xl border border-[#063b6b] font-mono text-[11px] space-y-1">
-                        <div className="flex items-center justify-between text-amber-300">
-                          <span className="font-bold">1. GET /api/weekly-hiring-plan/weeks</span>
-                          <span className="text-[10px] bg-[#042C51] px-2 py-0.5 rounded text-white font-sans">Available Weeks</span>
-                        </div>
-                        <p className="text-slate-400 text-[10px]">Returns available 6-week forecast version windows.</p>
-                        <pre className="text-emerald-300 text-[10px] bg-[#021224] p-2 rounded border border-[#063b6b] overflow-x-auto">
-{`{ data: [{ id: "w20", label: "2024 - Week 20 | May 13 - May 19", startDate: "2024-05-13", endDate: "2024-05-19", year: 2024, weekNumber: 20 }] }`}
-                        </pre>
-                      </div>
-
-                      {/* Contract 2 */}
-                      <div className="bg-[#031B33] text-slate-200 p-3.5 rounded-xl border border-[#063b6b] font-mono text-[11px] space-y-1">
-                        <div className="flex items-center justify-between text-amber-300">
-                          <span className="font-bold">2. GET /api/weekly-hiring-plan/accounts?cluster={"{cluster}"}&amp;startDate={"{startDate}"}</span>
-                          <span className="text-[10px] bg-[#042C51] px-2 py-0.5 rounded text-white font-sans">Account Ledger</span>
-                        </div>
-                        <p className="text-slate-400 text-[10px]">Returns cluster and account headcount ledgers with training pipeline metrics.</p>
-                        <pre className="text-emerald-300 text-[10px] bg-[#021224] p-2 rounded border border-[#063b6b] overflow-x-auto">
-{`{ data: [{ account: "Verizon Tech", requiredHeadcount: 1250, actualHeadcount: 1070, bufferPercentage: -14.4, netActualHeadcount: 1000 }] }`}
-                        </pre>
-                      </div>
-
-                      {/* Contract 3 */}
-                      <div className="bg-[#031B33] text-slate-200 p-3.5 rounded-xl border border-[#063b6b] font-mono text-[11px] space-y-1">
-                        <div className="flex items-center justify-between text-amber-300">
-                          <span className="font-bold">3. POST /api/weekly-hiring-plan/headcount/action-item</span>
-                          <span className="text-[10px] bg-[#042C51] px-2 py-0.5 rounded text-white font-sans">Create Action Item</span>
-                        </div>
-                        <p className="text-slate-400 text-[10px]">Saves mitigation tasks assigned to cluster leads.</p>
-                        <pre className="text-emerald-300 text-[10px] bg-[#021224] p-2 rounded border border-[#063b6b] overflow-x-auto">
-{`// Payload: { title: "Accelerate FST batch", assignee: "Sarah Jenkins", priority: "High", targetDate: "2026-08-15", account: "Verizon Tech" }`}
-                        </pre>
-                      </div>
-                    </div>
-
-                    {/* Normalization snippet */}
-                    <div className="bg-[#021224] text-slate-200 p-4 rounded-xl border border-[#063b6b] space-y-2">
-                      <h5 className="text-xs font-bold text-[#7DD3FC] flex items-center gap-2">
-                        <Code className="w-3.5 h-3.5 text-[#FF5C28]" />
-                        Data Normalization Adapter Layer (WorkforceHiringContextAdapter.jsx)
-                      </h5>
-                      <pre className="font-mono text-[10px] text-amber-200 overflow-x-auto leading-relaxed">
-{`export function buildSummary(totals) {
-  const requiredHeadcount = cleanNumber(totals?.requiredHeadcount);
-  const actualHeadcount = cleanNumber(totals?.actualHeadcount);
-  const absenteeismCount = cleanNumber(totals?.absenteeismCount);
-  const netActualHeadcount = Math.max(0, actualHeadcount - absenteeismCount);
-  
-  const bufferPercentage = requiredHeadcount > 0 
-    ? ((netActualHeadcount - requiredHeadcount) / requiredHeadcount) * 100 
-    : 0;
-
-  return {
-    requiredHeadcount,
-    actualHeadcount,
-    netActualHeadcount,
-    bufferPercentage: Number(bufferPercentage.toFixed(2)),
-    hiringNeeded: Math.max(0, requiredHeadcount - netActualHeadcount),
-  };
-}`}
-                      </pre>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* TAB 4: METRIC CATALOG */}
-              {activeArchTab === "formulas" && (
-                <div className="space-y-5 animate-in fade-in duration-150">
-                  <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs space-y-3">
-                    <h4 className="text-sm font-black text-[#042C51] flex items-center gap-2">
-                      <BarChart2 className="w-4 h-4 text-[#FF5C28]" />
-                      Detailed Metric Catalog &amp; Display Formulas
-                    </h4>
-                    <p className="text-slate-600 text-xs">
-                      Official metric definitions, data sources, and mathematical logic implemented across overview cards, ledgers, and modals:
-                    </p>
-
-                    <div className="overflow-x-auto rounded-xl border border-slate-200">
-                      <table className="w-full text-left border-collapse text-xs">
-                        <thead className="bg-[#042C51] text-white text-[10px] font-bold uppercase tracking-wider">
-                          <tr>
-                            <th className="px-3 py-2.5">Metric Name</th>
-                            <th className="px-3 py-2.5">Data Source</th>
-                            <th className="px-3 py-2.5">Mathematical Formula / Logic</th>
-                            <th className="px-3 py-2.5">UI Location</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-200 bg-white text-[11px]">
-                          <tr className="hover:bg-slate-50">
-                            <td className="px-3 py-2 font-bold text-[#042C51]">Required Headcount (HC)</td>
-                            <td className="px-3 py-2 text-slate-600">Requisitions DB</td>
-                            <td className="px-3 py-2 font-mono text-slate-700">Sum(Approved Requisition Baseline)</td>
-                            <td className="px-3 py-2 text-slate-500">Overview, Tables 1 &amp; 2, KPI Modal</td>
-                          </tr>
-                          <tr className="hover:bg-slate-50">
-                            <td className="px-3 py-2 font-bold text-[#042C51]">Actual Headcount (HC)</td>
-                            <td className="px-3 py-2 text-slate-600">Active Directory</td>
-                            <td className="px-3 py-2 font-mono text-slate-700">Sum(Active Roster Employees)</td>
-                            <td className="px-3 py-2 text-slate-500">Overview, Tables 1 &amp; 2, KPI Modal</td>
-                          </tr>
-                          <tr className="hover:bg-slate-50">
-                            <td className="px-3 py-2 font-bold text-[#042C51]">Net Actual Headcount</td>
-                            <td className="px-3 py-2 text-slate-600">Computed</td>
-                            <td className="px-3 py-2 font-mono text-slate-700">Math.max(0, Actual HC - Absenteeism)</td>
-                            <td className="px-3 py-2 text-slate-500">Overview, Tables 1 &amp; 2</td>
-                          </tr>
-                          <tr className="hover:bg-slate-50">
-                            <td className="px-3 py-2 font-bold text-[#042C51]">Buffer Cushion %</td>
-                            <td className="px-3 py-2 text-slate-600">Computed</td>
-                            <td className="px-3 py-2 font-mono text-slate-700">((Net Actual - Required) / Required) * 100</td>
-                            <td className="px-3 py-2 text-slate-500">Overview Cards, Tables 1 &amp; 2, Trend Svg</td>
-                          </tr>
-                          <tr className="hover:bg-slate-50">
-                            <td className="px-3 py-2 font-bold text-[#042C51]">Hiring Needed</td>
-                            <td className="px-3 py-2 text-slate-600">Computed Shortfall</td>
-                            <td className="px-3 py-2 font-mono text-slate-700">Math.max(0, Required HC - Net Actual)</td>
-                            <td className="px-3 py-2 text-slate-500">Overview, Tables 1 &amp; 2, KPI Modal</td>
-                          </tr>
-                          <tr className="hover:bg-slate-50">
-                            <td className="px-3 py-2 font-bold text-[#042C51]">Absenteeism %</td>
-                            <td className="px-3 py-2 text-slate-600">Floor Attendance</td>
-                            <td className="px-3 py-2 font-mono text-slate-700">(Absenteeism Count / Actual HC) * 100</td>
-                            <td className="px-3 py-2 text-slate-500">Tables 1 &amp; 2, Trend Svg</td>
-                          </tr>
-                          <tr className="hover:bg-slate-50">
-                            <td className="px-3 py-2 font-bold text-[#042C51]">Attrition %</td>
-                            <td className="px-3 py-2 text-slate-600">Resignation DB</td>
-                            <td className="px-3 py-2 font-mono text-slate-700">(Attrition Count / Actual HC) * 100</td>
-                            <td className="px-3 py-2 text-slate-500">Tables 1 &amp; 2, Attrition Card</td>
-                          </tr>
-                          <tr className="hover:bg-slate-50">
-                            <td className="px-3 py-2 font-bold text-[#042C51]">5 Training Pipeline Stages</td>
-                            <td className="px-3 py-2 text-slate-600">Candidate Funnel</td>
-                            <td className="px-3 py-2 font-mono text-slate-700">Accepted JO ➔ NHO ➔ FST ➔ PST ➔ Go Live</td>
-                            <td className="px-3 py-2 text-slate-500">Training Pipeline, Tables 1 &amp; 2</td>
-                          </tr>
-                          <tr className="hover:bg-slate-50">
-                            <td className="px-3 py-2 font-bold text-[#042C51]">Target Leads Needed</td>
-                            <td className="px-3 py-2 text-slate-600">Yield Engine</td>
-                            <td className="px-3 py-2 font-mono text-slate-700">Required Go Live / Historical Yield Rate</td>
-                            <td className="px-3 py-2 text-slate-500">Tables 1 &amp; 2, KPI Modal</td>
-                          </tr>
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* TAB 5: FILTERS & TABLES */}
-              {activeArchTab === "filters" && (
-                <div className="space-y-5 animate-in fade-in duration-150">
-                  <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs space-y-4">
-                    <h4 className="text-sm font-black text-[#042C51] flex items-center gap-2">
-                      <Filter className="w-4 h-4 text-[#FF5C28]" />
-                      Filter Engine Mechanics &amp; Cascading Behaviors
-                    </h4>
-
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                      <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-1">
-                        <strong className="text-xs font-bold text-[#042C51]">1. Weekly Version Filter</strong>
-                        <p className="text-slate-600 text-[11px]">Sorted chronologically descending (newest 2026 week at index 0). Re-fetches 6-week trend data and resets cluster/account filters.</p>
-                      </div>
-                      <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-1">
-                        <strong className="text-xs font-bold text-[#042C51]">2. Cluster Filter</strong>
-                        <p className="text-slate-600 text-[11px]">Multi-select dropdown. Dynamically narrows available client accounts to match selected operational cluster.</p>
-                      </div>
-                      <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-1">
-                        <strong className="text-xs font-bold text-[#042C51]">3. Account Filter</strong>
-                        <p className="text-slate-600 text-[11px]">Multi-select dropdown with real-time text search. Instantly filters table ledger rows and recalculates summary totals.</p>
-                      </div>
-                    </div>
-
-                    <div className="border-t pt-3 space-y-3">
-                      <h5 className="font-extrabold text-xs text-[#042C51]">Table Group Bandings &amp; Column Layouts</h5>
-                      
-                      <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200 space-y-1.5">
-                        <span className="text-[10px] font-black uppercase text-blue-800 bg-blue-100 px-2 py-0.5 rounded">
-                          Table 1: 6-Week Forecast &amp; Weekly Capacity Ledger
-                        </span>
-                        <p className="text-slate-600 text-[11px]">Tracks week-by-week rolling capacity projections across 6 forecast weeks.</p>
-                        <ul className="list-disc pl-4 text-[11px] text-slate-700 space-y-0.5 font-mono">
-                          <li>1. FORECAST WEEK &amp; PERIOD (Forecast Week, Date Range)</li>
-                          <li>2. CAPACITY &amp; SHORTFALL (Required HC, Actual HC, Net Actual, Buffer %, Hiring Needed)</li>
-                          <li>3. WEEKLY LOSS TELEMETRY (Absenteeism Count/%, Attrition Count/%)</li>
-                          <li>4. TRAINING MILESTONE &amp; CONVERSION PIPELINE (Accepted JO, NHO, FST, PST, Go Live)</li>
-                          <li>5. YIELD &amp; LEADS TARGET (Hiring Rate %, Target Leads Needed)</li>
-                        </ul>
-                      </div>
-
-                      <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200 space-y-1.5">
-                        <span className="text-[10px] font-black uppercase text-amber-800 bg-amber-100 px-2 py-0.5 rounded">
-                          Table 2: Multi-Account Capacity &amp; Training Funnel Ledger
-                        </span>
-                        <p className="text-slate-600 text-[11px]">Unit-by-unit master view comparing all client accounts across operational clusters.</p>
-                        <ul className="list-disc pl-4 text-[11px] text-slate-700 space-y-0.5 font-mono">
-                          <li>1. IDENTIFICATION &amp; SCOPE (Cluster, Account)</li>
-                          <li>2. ACCOUNT CAPACITY &amp; SHORTFALL (Required, Actual, Buffer %, Net Actual, Hiring Needed)</li>
-                          <li>3. 6-WEEK CUMULATIVE LOSS TELEMETRY (Absenteeism 6 Wks, Abs Rate %, Attrition 6 Wks, Att Rate %)</li>
-                          <li>4. ACCOUNT TRAINING FUNNEL &amp; PLACEMENTS (Accepted JO, NHO, FST, PST, Go Live, Hired Count)</li>
-                          <li>5. YIELD &amp; LEADS TARGET (Hiring Rate %, Target Leads)</li>
-                          <li>6. ACTIONS (Deep-Dive Inspector trigger button)</li>
-                        </ul>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* TAB 6: MODALS & AUDIT */}
-              {activeArchTab === "audit" && (
-                <div className="space-y-5 animate-in fade-in duration-150">
-                  {/* Modal Catalog */}
-                  <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs space-y-3">
-                    <h4 className="text-sm font-black text-[#042C51] flex items-center gap-2">
-                      <Layers className="w-4 h-4 text-[#FF5C28]" />
-                      Interactive Modals &amp; Specification Index
-                    </h4>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      <div className="p-3 bg-slate-50 rounded-lg border border-slate-200 space-y-1">
-                        <strong className="text-xs font-bold text-[#042C51]">AIInsightModal</strong>
-                        <p className="text-slate-600 text-[11px]">Interactive AI advisor analyzing capacity shortfalls, attrition risk drivers, and batch scheduling recommendations with live Q&amp;A chat.</p>
-                      </div>
-
-                      <div className="p-3 bg-slate-50 rounded-lg border border-slate-200 space-y-1">
-                        <strong className="text-xs font-bold text-[#042C51]">KPISnapshotModal</strong>
-                        <p className="text-slate-600 text-[11px]">Executive metric cards displaying high-level capacity floors (Required HC, Actual HC, Buffer Cushion %, Attrition %, Target Leads) and class start dates.</p>
-                      </div>
-
-                      <div className="p-3 bg-slate-50 rounded-lg border border-slate-200 space-y-1">
-                        <strong className="text-xs font-bold text-[#042C51]">ViewPlanModal</strong>
-                        <p className="text-slate-600 text-[11px]">Full-screen comprehensive audit view presenting historical week-over-week hiring plan logs with export capability.</p>
-                      </div>
-
-                      <div className="p-3 bg-slate-50 rounded-lg border border-slate-200 space-y-1">
-                        <strong className="text-xs font-bold text-[#042C51]">ForecastWeekAccountDetailsModal</strong>
-                        <p className="text-slate-600 text-[11px]">Deep-dive inspector triggered from Table 2 rows showing week-by-week 6-week trajectory and milestone cohort counts.</p>
-                      </div>
-
-                      <div className="p-3 bg-slate-50 rounded-lg border border-slate-200 space-y-1">
-                        <strong className="text-xs font-bold text-[#042C51]">ActionItemModal</strong>
-                        <p className="text-slate-600 text-[11px]">Form modal for creating remediation tasks with Title, Target Account, Assignee, Priority (High/Medium/Low), and Resolution Date.</p>
-                      </div>
-
-                      <div className="p-3 bg-slate-50 rounded-lg border border-slate-200 space-y-1">
-                        <strong className="text-xs font-bold text-[#042C51]">StatusModal</strong>
-                        <p className="text-slate-600 text-[11px]">Toast/dialog feedback confirmation for operational actions (saving plans, exporting reports, assigning tasks).</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Codebase Risks & Technical Audit */}
-                  <div className="bg-rose-50 border border-rose-200 p-4 rounded-xl space-y-3">
-                    <h4 className="text-xs font-black uppercase text-rose-900 tracking-wider flex items-center gap-2">
-                      <ShieldAlert className="w-4 h-4 text-rose-600" />
-                      Codebase Risks, Technical Debt &amp; Architectural Audit Items
-                    </h4>
-
-                    <div className="space-y-2 text-[11px] text-rose-900">
-                      <div className="p-2.5 bg-white/80 rounded-lg border border-rose-200 space-y-0.5">
-                        <strong className="font-bold block text-rose-800">1. Authorization Logic Duplication</strong>
-                        <p className="text-slate-700">Route protection uses accessControl.js, navigation uses numeric adminAccess, and local component checks handle action buttons. All three must be kept in sync when adding new features.</p>
-                      </div>
-
-                      <div className="p-2.5 bg-white/80 rounded-lg border border-rose-200 space-y-0.5">
-                        <strong className="font-bold block text-rose-800">2. Global Provider Mount Cost</strong>
-                        <p className="text-slate-700">WorkforceHiringProvider is mounted globally in providers.jsx. Initial fetch effects run on app load; ensure polling or window focus listeners are properly debounced.</p>
-                      </div>
-
-                      <div className="p-2.5 bg-white/80 rounded-lg border border-rose-200 space-y-0.5">
-                        <strong className="font-bold block text-rose-800">3. Session Expiry Storage Key Divergence</strong>
-                        <p className="text-slate-700">Session expiry keys vary across legacy helpers (localStorage.token_expires_at vs sessionStorage.accessTokenExpiresAt).</p>
-                      </div>
-
-                      <div className="p-2.5 bg-white/80 rounded-lg border border-rose-200 space-y-0.5">
-                        <strong className="font-bold block text-rose-800">4. Bundle Optimization Opportunity</strong>
-                        <p className="text-slate-700">The main client bundle can be optimized using React.lazy dynamic imports for secondary modals and audit inspection drawers.</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Modal Footer */}
-            <div className="p-4 bg-[#031B33] border-t border-[#063b6b] flex items-center justify-between shrink-0">
-              <div className="flex items-center gap-2 text-slate-400 text-xs font-mono">
-                <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                <span>100% Architecture Audit Compliant • Production Ready</span>
-              </div>
-              <button
-                onClick={() => setIsArchitectureModalOpen(false)}
-                className="px-5 py-2 bg-[#FF5C28] hover:bg-[#e04f20] text-white font-extrabold text-xs rounded-xl shadow transition-all"
-              >
-                Close Architecture Review
-              </button>
-            </div>
           </div>
         </div>
       )}

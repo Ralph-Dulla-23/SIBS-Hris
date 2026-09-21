@@ -841,7 +841,7 @@ export default function LeavesManagement() {
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="bg-white rounded-3xl border border-[#E6ECF2] shadow-2xl max-w-2xl w-full overflow-hidden my-8"
+              className="bg-white rounded-3xl shadow-2xl max-w-2xl w-full overflow-hidden my-8"
               onClick={e => e.stopPropagation()}
             >
               {/* Header */}
@@ -1076,7 +1076,7 @@ export default function LeavesManagement() {
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="bg-white rounded-3xl border border-[#E6ECF2] shadow-2xl max-w-lg w-full overflow-hidden"
+              className="bg-white rounded-3xl shadow-2xl max-w-lg w-full overflow-hidden"
             >
               <div className="bg-[#042C51] text-white p-5 flex items-center justify-between border-b border-[#083a69]">
                 <div className="flex items-center gap-2">

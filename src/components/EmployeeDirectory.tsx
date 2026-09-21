@@ -251,7 +251,7 @@ const INITIAL_ALENA_DATA: EmployeeData = {
   status: "Active",
   hireDate: "2024-03-01",
   account: "Verizon Tech",
-  location: "Manila Corporate HQ",
+  location: "Davao Corporate HQ",
 
   // Family
   spouse: {

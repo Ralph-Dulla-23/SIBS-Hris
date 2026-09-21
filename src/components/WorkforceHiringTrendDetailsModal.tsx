@@ -16,7 +16,6 @@ import {
   Maximize2
 } from "lucide-react";
 import { DetailRecord, TrendPoint } from "../types";
-import PipelineStageDropChart from "./PipelineStageDropChart";
 
 interface WorkforceHiringTrendDetailsModalProps {
   isOpen: boolean;
@@ -198,18 +197,16 @@ export default function WorkforceHiringTrendDetailsModal({
 
   // SVG Chart Dimensions
   const svgWidth = 700;
-  const svgHeight = 240;
+  const svgHeight = 160;
   const padX = 45;
-  const padY = 28;
-  const modalStartX = 80; // Inset starting point to leave clean space after Y-axis line & labels
-  const modalEndX = svgWidth - 35; // Inset ending point
+  const padY = 22;
 
   // Chart coordinate mappings
   const minVal = -10;
   const maxVal = 14;
 
   const pointsWithCoords = chartPoints.map((pt, i) => {
-    const x = modalStartX + (i / (chartPoints.length - 1)) * (modalEndX - modalStartX);
+    const x = padX + (i / (chartPoints.length - 1)) * (svgWidth - padX * 2);
     const getY = (val: number) => svgHeight - padY - ((val - minVal) / (maxVal - minVal)) * (svgHeight - padY * 2);
     return {
       ...pt,
@@ -224,7 +221,7 @@ export default function WorkforceHiringTrendDetailsModal({
 
   return (
     <div className="fixed inset-0 z-50 bg-[#042C51]/75 backdrop-blur-sm flex items-center justify-center p-3 sm:p-5 overflow-y-auto animate-fade-in">
-      <div className="bg-[#F8FAFC] w-full max-w-6xl rounded-2xl shadow-2xl border border-slate-200 flex flex-col max-h-[92vh] overflow-hidden">
+      <div className="bg-[#F8FAFC] w-full max-w-6xl rounded-2xl shadow-2xl flex flex-col max-h-[92vh] overflow-hidden">
         
         {/* ==================== 1. MODAL HEADER ==================== */}
         <div className="bg-[#042C51] text-white px-5 py-3.5 flex items-center justify-between shrink-0 border-b border-slate-700">
@@ -437,34 +434,24 @@ export default function WorkforceHiringTrendDetailsModal({
                 {/* SVG Trend Line Chart */}
                 <div className="relative border border-slate-200/80 rounded-xl p-2.5 bg-slate-50/70 select-none">
                   
-                  {/* Chart Legend with Tooltips */}
-                  <div className="flex items-center gap-4 text-[10px] font-extrabold mb-2 justify-center uppercase tracking-wider">
-                    <span 
-                      className="flex items-center gap-1.5 text-slate-700 cursor-help hover:text-[#2563EB] transition-colors"
-                      title="Absenteeism Rate (ABS %): Percentage of scheduled workforce absent"
-                    >
-                      <span className="w-3 h-1 bg-[#2563EB] rounded-full inline-block"></span> Absenteeism %
+                  {/* Chart Legend */}
+                  <div className="flex items-center gap-4 text-[9px] font-extrabold mb-1.5 justify-center uppercase tracking-wider">
+                    <span className="flex items-center gap-1 text-slate-700">
+                      <span className="w-2.5 h-0.5 bg-[#2563EB] rounded-full inline-block"></span> Absenteeism %
                     </span>
-                    <span 
-                      className="flex items-center gap-1.5 text-slate-700 cursor-help hover:text-[#EA580C] transition-colors"
-                      title="Attrition Rate (ATT %): Percentage of total staff turnover"
-                    >
-                      <span className="w-3 h-1 bg-[#EA580C] rounded-full inline-block"></span> Attrition %
+                    <span className="flex items-center gap-1 text-slate-700">
+                      <span className="w-2.5 h-0.5 bg-[#EA580C] rounded-full inline-block"></span> Attrition %
                     </span>
-                    <span 
-                      className="flex items-center gap-1.5 text-slate-700 cursor-help hover:text-[#16A34A] transition-colors"
-                      title="Buffer Cushion Percentage (BUF %): Headcount buffer variance relative to target"
-                    >
-                      <span className="w-3 h-1 bg-[#16A34A] rounded-full inline-block"></span> Buffer %
+                    <span className="flex items-center gap-1 text-slate-700">
+                      <span className="w-2.5 h-0.5 bg-[#16A34A] rounded-full inline-block"></span> Buffer %
                     </span>
                   </div>
 
-                  <svg viewBox={`0 0 ${svgWidth} ${svgHeight}`} className="w-full h-auto overflow-visible select-none">
-                    {/* Horizontal Y-Gridlines (2% increments) */}
-                    {[-8, -6, -4, -2, 0, 2, 4, 6, 8, 10, 12].map((yVal, idx) => {
+                  <svg viewBox={`0 0 ${svgWidth} ${svgHeight}`} className="w-full h-auto max-h-[220px]">
+                    {/* Horizontal Y-Gridlines */}
+                    {[-8, -4, 0, 4, 8, 12].map((yVal, idx) => {
                       const yPos = svgHeight - padY - ((yVal - minVal) / (maxVal - minVal)) * (svgHeight - padY * 2);
                       const isZero = yVal === 0;
-                      const isMajor = yVal % 4 === 0;
                       return (
                         <g key={idx}>
                           <line
@@ -472,66 +459,31 @@ export default function WorkforceHiringTrendDetailsModal({
                             y1={yPos}
                             x2={svgWidth - padX}
                             y2={yPos}
-                            stroke={isZero ? "#E74C3C" : isMajor ? "#CBD5E1" : "#F1F5F9"}
-                            strokeWidth={isZero ? 1.8 : isMajor ? 0.9 : 0.6}
-                            strokeDasharray={isZero ? "none" : isMajor ? "3 3" : "2 2"}
+                            stroke={isZero ? "#E74C3C" : "#E2E8F0"}
+                            strokeWidth={isZero ? 1.2 : 0.6}
+                            strokeDasharray={isZero ? "none" : "3 3"}
                           />
-                          {isMajor && (
-                            <text
-                              x={padX - 8}
-                              y={yPos + 3.5}
-                              fill={isZero ? "#E74C3C" : "#64748B"}
-                              fontSize="10"
-                              fontWeight={isZero ? "bold" : "600"}
-                              textAnchor="end"
-                            >
-                              {yVal}%
-                            </text>
-                          )}
+                          <text
+                            x={padX - 8}
+                            y={yPos + 3}
+                            fill={isZero ? "#E74C3C" : "#94A3B8"}
+                            fontSize="9"
+                            fontWeight={isZero ? "800" : "600"}
+                            textAnchor="end"
+                          >
+                            {yVal}%
+                          </text>
                         </g>
                       );
                     })}
 
-                    {/* Vertical Column Guidelines */}
-                    {pointsWithCoords.map((pt, i) => (
-                      <line
-                        key={`modal-vgrid-${i}`}
-                        x1={pt.x}
-                        y1={padY}
-                        x2={pt.x}
-                        y2={svgHeight - padY}
-                        stroke="#94A3B8"
-                        strokeWidth="1"
-                        strokeDasharray="3 3"
-                        opacity="0.4"
-                      />
-                    ))}
-
-                    {/* Axis Boundary Base Lines */}
-                    <line
-                      x1={padX}
-                      y1={padY}
-                      x2={padX}
-                      y2={svgHeight - padY}
-                      stroke="#042C51"
-                      strokeWidth="1.5"
-                    />
-                    <line
-                      x1={padX}
-                      y1={svgHeight - padY}
-                      x2={svgWidth - padX}
-                      y2={svgHeight - padY}
-                      stroke="#042C51"
-                      strokeWidth="1.5"
-                    />
-
                     {/* Zero target label */}
                     <text 
                       x={svgWidth - padX - 10} 
-                      y={svgHeight - padY - ((0 - minVal) / (maxVal - minVal)) * (svgHeight - padY * 2) - 6} 
+                      y={svgHeight - padY - ((0 - minVal) / (maxVal - minVal)) * (svgHeight - padY * 2) - 4} 
                       fill="#E74C3C" 
-                      fontSize="9" 
-                      fontWeight="bold" 
+                      fontSize="8" 
+                      fontWeight="800" 
                       textAnchor="end"
                     >
                       TARGET BUFFER FLOOR (0%)
@@ -542,7 +494,7 @@ export default function WorkforceHiringTrendDetailsModal({
                       d={pointsWithCoords.map((p, i) => `${i === 0 ? "M" : "L"} ${p.x} ${p.absY}`).join(" ")}
                       fill="none"
                       stroke="#2563EB"
-                      strokeWidth="3.5"
+                      strokeWidth="2"
                       strokeLinecap="round"
                       strokeLinejoin="round"
                     />
@@ -552,7 +504,7 @@ export default function WorkforceHiringTrendDetailsModal({
                       d={pointsWithCoords.map((p, i) => `${i === 0 ? "M" : "L"} ${p.x} ${p.attY}`).join(" ")}
                       fill="none"
                       stroke="#EA580C"
-                      strokeWidth="3.5"
+                      strokeWidth="2"
                       strokeLinecap="round"
                       strokeLinejoin="round"
                     />
@@ -562,124 +514,10 @@ export default function WorkforceHiringTrendDetailsModal({
                       d={pointsWithCoords.map((p, i) => `${i === 0 ? "M" : "L"} ${p.x} ${p.bufY}`).join(" ")}
                       fill="none"
                       stroke="#16A34A"
-                      strokeWidth="3.5"
+                      strokeWidth="2"
                       strokeLinecap="round"
                       strokeLinejoin="round"
                     />
-
-                    {/* Permanent Data Value Labels on Modal Graph Points */}
-                    {pointsWithCoords.map((pt, idx) => (
-                      <g key={`modal-perm-label-${idx}`} className="pointer-events-none select-none">
-                        <text
-                          x={pt.x}
-                          y={pt.absY - 8}
-                          fill="#1D4ED8"
-                          fontSize="9.5"
-                          fontWeight="800"
-                          textAnchor="middle"
-                        >
-                          {pt.absenteeism}%
-                        </text>
-                        <text
-                          x={pt.x}
-                          y={pt.attY - 8}
-                          fill="#C2410C"
-                          fontSize="9.5"
-                          fontWeight="800"
-                          textAnchor="middle"
-                        >
-                          {pt.attrition}%
-                        </text>
-                        <text
-                          x={pt.x}
-                          y={pt.bufY + 14}
-                          fill={pt.buffer < 0 ? "#DC2626" : "#15803D"}
-                          fontSize="9.5"
-                          fontWeight="800"
-                          textAnchor="middle"
-                        >
-                          {pt.buffer}%
-                        </text>
-                      </g>
-                    ))}
-
-                    {/* Dynamic Hover Guidelines for Modal Chart */}
-                    {hoveredPointIdx !== null && pointsWithCoords[hoveredPointIdx] && (() => {
-                      const activePt = pointsWithCoords[hoveredPointIdx];
-                      return (
-                        <g className="pointer-events-none">
-                          <line
-                            x1={activePt.x}
-                            y1={padY}
-                            x2={activePt.x}
-                            y2={svgHeight - padY}
-                            stroke="#042C51"
-                            strokeWidth="1.5"
-                            strokeDasharray="4 3"
-                          />
-                          <line
-                            x1={padX}
-                            y1={activePt.absY}
-                            x2={activePt.x}
-                            y2={activePt.absY}
-                            stroke="#2563EB"
-                            strokeWidth="1.2"
-                            strokeDasharray="3 3"
-                            opacity="0.8"
-                          />
-                          <line
-                            x1={padX}
-                            y1={activePt.attY}
-                            x2={activePt.x}
-                            y2={activePt.attY}
-                            stroke="#EA580C"
-                            strokeWidth="1.2"
-                            strokeDasharray="3 3"
-                            opacity="0.8"
-                          />
-                          <line
-                            x1={padX}
-                            y1={activePt.bufY}
-                            x2={activePt.x}
-                            y2={activePt.bufY}
-                            stroke="#16A34A"
-                            strokeWidth="1.2"
-                            strokeDasharray="3 3"
-                            opacity="0.8"
-                          />
-                          <text
-                            x={activePt.x}
-                            y={activePt.absY - 10}
-                            fill="#1E40AF"
-                            fontSize="9.5"
-                            fontWeight="bold"
-                            textAnchor="middle"
-                          >
-                            {activePt.absenteeism}%
-                          </text>
-                          <text
-                            x={activePt.x}
-                            y={activePt.attY - 10}
-                            fill="#C2410C"
-                            fontSize="9.5"
-                            fontWeight="bold"
-                            textAnchor="middle"
-                          >
-                            {activePt.attrition}%
-                          </text>
-                          <text
-                            x={activePt.x}
-                            y={activePt.bufY + 16}
-                            fill={activePt.buffer < 0 ? "#DC2626" : "#15803D"}
-                            fontSize="9.5"
-                            fontWeight="bold"
-                            textAnchor="middle"
-                          >
-                            {activePt.buffer}%
-                          </text>
-                        </g>
-                      );
-                    })()}
 
                     {/* Interactive Points & Node Detectors */}
                     {pointsWithCoords.map((pt, idx) => {
@@ -687,9 +525,22 @@ export default function WorkforceHiringTrendDetailsModal({
                       return (
                         <g key={idx} className="cursor-pointer" onMouseEnter={() => setHoveredPointIdx(idx)}>
                           {/* Circles */}
-                          <circle cx={pt.x} cy={pt.absY} r={isHovered ? 6.5 : 4.5} fill="#2563EB" stroke="#ffffff" strokeWidth="2" />
-                          <circle cx={pt.x} cy={pt.attY} r={isHovered ? 6.5 : 4.5} fill="#EA580C" stroke="#ffffff" strokeWidth="2" />
-                          <circle cx={pt.x} cy={pt.bufY} r={isHovered ? 6.5 : 4.5} fill="#16A34A" stroke="#ffffff" strokeWidth="2" />
+                          <circle cx={pt.x} cy={pt.absY} r={isHovered ? 5 : 3.5} fill="#2563EB" stroke="#ffffff" strokeWidth="1.5" />
+                          <circle cx={pt.x} cy={pt.attY} r={isHovered ? 5 : 3.5} fill="#EA580C" stroke="#ffffff" strokeWidth="1.5" />
+                          <circle cx={pt.x} cy={pt.bufY} r={isHovered ? 5 : 3.5} fill="#16A34A" stroke="#ffffff" strokeWidth="1.5" />
+
+                          {/* Guidelines */}
+                          {isHovered && (
+                            <line
+                              x1={pt.x}
+                              y1={padY}
+                              x2={pt.x}
+                              y2={svgHeight - padY}
+                              stroke="#042C51"
+                              strokeWidth="1.2"
+                              strokeDasharray="3 3"
+                            />
+                          )}
 
                           {/* Transparent overlay detector */}
                           <rect
@@ -703,10 +554,10 @@ export default function WorkforceHiringTrendDetailsModal({
                           {/* X Axis Label */}
                           <text
                             x={pt.x}
-                            y={svgHeight - padY + 16}
+                            y={svgHeight - padY + 14}
                             fill="#475569"
-                            fontSize="10"
-                            fontWeight="bold"
+                            fontSize="9"
+                            fontWeight="700"
                             textAnchor="middle"
                           >
                             {pt.period}
@@ -813,199 +664,98 @@ export default function WorkforceHiringTrendDetailsModal({
               </div>
             </div>
 
-          {/* ==================== 5.5 PIPELINE STAGE ATTRITION DROP GRAPH ==================== */}
-          <PipelineStageDropChart
-            title="6-Week Cumulative Pipeline Flow & Stage Drop Attrition"
-            subtitle="Aggregated funnel stages across filtered accounts with connector bridges and attrition drop metrics (-Drop Count / % Attrition)."
-            stages={[
-              { name: "Accepted", shortName: "Job Offer", count: filteredRecords.reduce((acc, r) => acc + r.acceptedJO, 0), subtitle: "Accepted JO", color: "#042C51" },
-              { name: "NHO", shortName: "Count", count: filteredRecords.reduce((acc, r) => acc + r.nho, 0), subtitle: "NHO Count", color: "#2563EB" },
-              { name: "FST", shortName: "Count", count: filteredRecords.reduce((acc, r) => acc + r.fst, 0), subtitle: "FST Count", color: "#0D9488" },
-              { name: "PST", shortName: "Count", count: filteredRecords.reduce((acc, r) => acc + r.pst, 0), subtitle: "PST Count", color: "#EA580C" },
-              { name: "Go Live", shortName: "Count", count: filteredRecords.reduce((acc, r) => acc + r.goLive, 0), subtitle: "Go Live", color: "#15803D" },
-            ]}
-          />
-
           {/* ==================== 6. MASTER MULTI-WEEK PERFORMANCE DETAILS TABLE ==================== */}
           <div className="bg-white p-5 rounded-2xl border border-[#E6ECF2] shadow-sm space-y-4">
             
             {/* Table Header & Local Search */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-slate-100">
               <div>
-                <h3 className="text-sm font-black uppercase tracking-wider text-[#042C51] flex items-center gap-1.5">
+                <h3 className="text-xs font-black uppercase tracking-wider text-[#042C51] flex items-center gap-1.5">
                   <span className="w-1.5 h-3.5 bg-[#FF5C28] rounded-sm"></span>
-                  6 – WEEK DETAILED PERFORMANCE BY CLUSTER / ACCOUNT
+                  Master Multi-Week Performance & Diagnostic Details Table
                 </h3>
                 <p className="text-[11px] text-slate-500 font-medium mt-0.5">
-                  Same table format as the main detailed table, calculated from the previous 6 weeks.
+                  Unit-level account breakdown showing workforce targets, buffer cushion, stage pipeline counts, and drop-off metrics.
                 </p>
               </div>
 
-              <div className="flex items-center gap-3">
-                {/* Table search filter */}
-                <div className="relative w-full sm:w-64">
-                  <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-2.5" />
-                  <input
-                    type="text"
-                    placeholder="Search account/cluster..."
-                    value={tableSearchQuery}
-                    onChange={(e) => setTableSearchQuery(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-lg pl-9 pr-3 py-1.5 text-xs font-medium focus:outline-none focus:ring-1 focus:ring-[#042C51]"
-                  />
-                </div>
-
-                {/* Account Rows Badge */}
-                <span className="bg-[#E9F0FC] text-[#042C51] px-3 py-1.5 rounded-full border border-blue-200 text-xs font-bold whitespace-nowrap">
-                  {filteredRecords.length} account rows
-                </span>
+              {/* Table search filter */}
+              <div className="relative w-full sm:w-72">
+                <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-2.5" />
+                <input
+                  type="text"
+                  placeholder="Filter table by cluster or account..."
+                  value={tableSearchQuery}
+                  onChange={(e) => setTableSearchQuery(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-lg pl-9 pr-3 py-1.5 text-xs font-medium focus:outline-none focus:ring-1 focus:ring-[#042C51]"
+                />
               </div>
             </div>
 
-            {/* High Density 28-Column 6-Week Performance Data Table */}
-            <div className="overflow-x-auto border border-[#E6ECF2] rounded-xl shadow-2xs max-h-[500px] overflow-y-auto">
-              <table className="w-full text-left border-collapse text-xs whitespace-nowrap">
-                <thead className="bg-[#F8FAFC] text-[#042C51] font-bold uppercase text-[10px] tracking-wider sticky top-0 z-10 border-b border-[#CBD5E1] shadow-2xs">
-                  {/* Category Header Row 1 */}
-                  <tr className="border-b border-[#CBD5E1]">
-                    <th colSpan={2} className="px-3 py-2 bg-[#E2EBF4] text-[#042C51] border-r border-[#CBD5E1] text-center font-black tracking-wider">
-                      1. IDENTIFICATION & SCOPE
-                    </th>
-                    <th colSpan={5} className="px-3 py-2 bg-[#EEF4FB] text-[#042C51] border-r border-[#CBD5E1] text-center font-black tracking-wider">
-                      2. CAPACITY & BUFFER METRICS
-                    </th>
-                    <th colSpan={4} className="px-3 py-2 bg-[#E2EBF4] text-[#042C51] border-r border-[#CBD5E1] text-center font-black tracking-wider">
-                      3. 6-WEEK LOSS METRICS
-                    </th>
-                    <th colSpan={5} className="px-3 py-2 bg-[#EEF4FB] text-[#042C51] border-r border-[#CBD5E1] text-center font-black tracking-wider">
-                      4. HIRING FUNNEL COUNTS
-                    </th>
-                    <th colSpan={10} className="px-3 py-2 bg-[#E2EBF4] text-[#042C51] border-r border-[#CBD5E1] text-center font-black tracking-wider">
-                      5. ATTRITION BETWEEN STAGES
-                    </th>
-                    <th colSpan={2} className="px-3 py-2 bg-[#EEF4FB] text-[#042C51] text-center font-black tracking-wider">
-                      6. YIELD & RECRUITING
-                    </th>
-                  </tr>
-
-                  {/* Sub Header Row 2 */}
-                  <tr className="bg-[#F8FAFC] text-[#042C51] text-[10px] font-bold">
-                    <th className="px-3 py-2.5 border-r border-[#CBD5E1]">CLUSTER</th>
-                    <th className="px-3 py-2.5 border-r border-[#CBD5E1]">ACCOUNT</th>
-                    <th className="px-3 py-2.5 text-right border-r border-[#CBD5E1]">REQUIRED HC ▼</th>
-                    <th className="px-3 py-2.5 text-right border-r border-[#CBD5E1]">ACTUAL HC</th>
-                    <th className="px-3 py-2.5 text-right border-r border-[#CBD5E1]">BUFFER %</th>
-                    <th className="px-3 py-2.5 text-right border-r border-[#CBD5E1]">NET ACTUAL HC</th>
-                    <th className="px-3 py-2.5 text-right border-r border-[#CBD5E1]">HIRING NEEDED</th>
-
-                    <th className="px-3 py-2.5 text-right border-r border-[#CBD5E1]">ABSENTEEISM (6 WKS AVG)</th>
-                    <th className="px-3 py-2.5 text-right border-r border-[#CBD5E1]">ABS %</th>
-                    <th className="px-3 py-2.5 text-right border-r border-[#CBD5E1]">ATTRITION (6 WKS TOTAL)</th>
-                    <th className="px-3 py-2.5 text-right border-r border-[#CBD5E1]">ATT %</th>
-
-                    {/* Hiring Funnel Sub-Headers */}
-                    <th className="px-3 py-2.5 text-center border-r border-[#CBD5E1]">ACCEPTED JO</th>
-                    <th className="px-3 py-2.5 text-center border-r border-[#CBD5E1]">NHO COUNT</th>
-                    <th className="px-3 py-2.5 text-center border-r border-[#CBD5E1]">FST COUNT</th>
-                    <th className="px-3 py-2.5 text-center border-r border-[#CBD5E1]">PST COUNT</th>
-                    <th className="px-3 py-2.5 text-center border-r border-[#CBD5E1]">GO LIVE</th>
-
-                    {/* Attrition Between Stages Sub-Headers */}
-                    <th className="px-2 py-2.5 text-center border-r border-[#CBD5E1]">JO - NHO COUNT</th>
-                    <th className="px-2 py-2.5 text-center border-r border-[#CBD5E1]">%</th>
-                    <th className="px-2 py-2.5 text-center border-r border-[#CBD5E1]">NHO - FST COUNT</th>
-                    <th className="px-2 py-2.5 text-center border-r border-[#CBD5E1]">%</th>
-                    <th className="px-2 py-2.5 text-center border-r border-[#CBD5E1]">FST - PST COUNT</th>
-                    <th className="px-2 py-2.5 text-center border-r border-[#CBD5E1]">%</th>
-                    <th className="px-2 py-2.5 text-center border-r border-[#CBD5E1]">NHO - PST COUNT</th>
-                    <th className="px-2 py-2.5 text-center border-r border-[#CBD5E1]">%</th>
-                    <th className="px-2 py-2.5 text-center border-r border-[#CBD5E1]">PST - GO LIVE COUNT</th>
-                    <th className="px-2 py-2.5 text-center border-r border-[#CBD5E1]">%</th>
-
-                    <th className="px-3 py-2.5 text-right border-r border-[#CBD5E1]">HIRED COUNT</th>
-                    <th className="px-3 py-2.5 text-right">HIRING RATE (LEADS TO JO)</th>
+            {/* High Density Performance Data Table */}
+            <div className="overflow-x-auto border border-[#E6ECF2] rounded-xl shadow-2xs max-h-96 overflow-y-auto">
+              <table className="w-full text-left border-collapse text-xs">
+                <thead className="bg-[#042C51] text-white font-extrabold uppercase text-[10px] tracking-wider sticky top-0 z-10">
+                  <tr>
+                    <th className="px-3 py-2.5">Cluster & Account</th>
+                    <th className="px-2.5 py-2.5 text-right">Req HC</th>
+                    <th className="px-2.5 py-2.5 text-right">Act HC</th>
+                    <th className="px-2.5 py-2.5 text-right">Buffer %</th>
+                    <th className="px-2.5 py-2.5 text-right">Absenteeism</th>
+                    <th className="px-2.5 py-2.5 text-right">Attrition</th>
+                    <th className="px-2.5 py-2.5 text-right">Net Act HC</th>
+                    <th className="px-2.5 py-2.5 text-right">Hiring Needed</th>
+                    <th className="px-2 py-2.5 text-center bg-[#073D6F]">JO</th>
+                    <th className="px-2 py-2.5 text-center bg-[#073D6F]">NHO</th>
+                    <th className="px-2 py-2.5 text-center bg-[#073D6F]">FST</th>
+                    <th className="px-2 py-2.5 text-center bg-[#073D6F]">PST</th>
+                    <th className="px-2 py-2.5 text-center bg-[#073D6F]">Go Live</th>
+                    <th className="px-2.5 py-2.5 text-right">Hired Cnt</th>
+                    <th className="px-2.5 py-2.5 text-right">Hiring Rate</th>
                   </tr>
                 </thead>
-
                 <tbody className="divide-y divide-[#E6ECF2] bg-white font-medium text-slate-700">
                   {filteredRecords.length === 0 ? (
                     <tr>
-                      <td colSpan={28} className="px-4 py-8 text-center text-slate-400 font-semibold">
+                      <td colSpan={15} className="px-4 py-8 text-center text-slate-400 font-semibold">
                         No detail records match the current filter criteria.
                       </td>
                     </tr>
                   ) : (
                     filteredRecords.map((r, idx) => {
                       const isDeficit = r.bufferPercentage < 0;
-
-                      // 6-week calculated total attrition & average absenteeism
-                      const absAvgCount = r.absenteeismCount;
-                      const attTotalCount = Math.round(r.attritionCount * 5.8);
-
-                      // Stage transition attrition counts and percentages
-                      const joNhoCnt = Math.max(0, r.acceptedJO - r.nho);
-                      const joNhoPct = r.acceptedJO > 0 ? (((r.acceptedJO - r.nho) / r.acceptedJO) * 100).toFixed(1) : "0.0";
-
-                      const nhoFstCnt = Math.max(0, r.nho - r.fst);
-                      const nhoFstPct = r.nho > 0 ? (((r.nho - r.fst) / r.nho) * 100).toFixed(1) : "0.0";
-
-                      const fstPstCnt = Math.max(0, r.fst - r.pst);
-                      const fstPstPct = r.fst > 0 ? (((r.fst - r.pst) / r.fst) * 100).toFixed(1) : "0.0";
-
-                      const nhoPstCnt = Math.max(0, r.nho - r.pst);
-                      const nhoPstPct = r.nho > 0 ? (((r.nho - r.pst) / r.nho) * 100).toFixed(1) : "0.0";
-
-                      const pstGoLiveCnt = Math.max(0, r.pst - r.goLive);
-                      const pstGoLivePct = r.pst > 0 ? (((r.pst - r.goLive) / r.pst) * 100).toFixed(1) : "0.0";
-
                       return (
                         <tr key={r.id || idx} className="hover:bg-slate-50/80 transition-colors">
-                          <td className="px-3 py-2.5 font-medium text-slate-500 border-r border-[#E6ECF2]">{r.cluster}</td>
-                          <td className="px-3 py-2.5 font-bold text-[#042C51] border-r border-[#E6ECF2]">{r.account}</td>
-                          <td className="px-3 py-2.5 text-right font-mono font-bold text-[#042C51]">{r.requiredHC}</td>
-                          <td className="px-3 py-2.5 text-right font-mono text-slate-600">{r.actualHC}</td>
-                          <td className="px-3 py-2.5 text-right font-mono font-bold">
-                            <span className={isDeficit ? "text-[#E74C3C]" : "text-[#2ECC71]"}>
-                              {r.bufferPercentage.toFixed(1)}%
+                          <td className="px-3 py-2 font-bold text-slate-900 whitespace-nowrap">
+                            <span className="text-[10px] text-slate-400 font-mono uppercase block">{r.cluster}</span>
+                            <span className="text-xs text-[#042C51] font-extrabold">{r.account}</span>
+                          </td>
+                          <td className="px-2.5 py-2 text-right font-mono font-bold text-slate-800">{r.requiredHC}</td>
+                          <td className="px-2.5 py-2 text-right font-mono font-bold text-slate-800">{r.actualHC}</td>
+                          <td className="px-2.5 py-2 text-right font-mono font-black">
+                            <span className={`px-1.5 py-0.5 rounded text-[10px] ${
+                              isDeficit ? "bg-rose-100 text-rose-800" : "bg-emerald-100 text-emerald-800"
+                            }`}>
+                              {r.bufferPercentage}%
                             </span>
                           </td>
-                          <td className="px-3 py-2.5 text-right font-mono font-bold text-[#042C51]">{r.netActualHC}</td>
-                          <td className="px-3 py-2.5 text-right font-mono font-bold border-r border-[#E6ECF2]">
-                            {r.hiringNeeded > 0 ? (
-                              <span className="bg-rose-50 text-[#E74C3C] px-2 py-0.5 rounded font-bold border border-rose-100 shadow-2xs">
-                                {r.hiringNeeded}
-                              </span>
-                            ) : (
-                              <span className="text-slate-400">0</span>
-                            )}
+                          <td className="px-2.5 py-2 text-right font-mono">
+                            <span className="font-bold text-slate-800">{r.absenteeismCount}</span>
+                            <span className="text-[10px] text-slate-400 ml-1">({r.absenteeismPercentage}%)</span>
                           </td>
-
-                          <td className="px-3 py-2.5 text-right font-mono text-slate-700">{absAvgCount}</td>
-                          <td className="px-3 py-2.5 text-right font-mono font-bold text-slate-800">{r.absenteeismPercentage.toFixed(1)}%</td>
-                          <td className="px-3 py-2.5 text-right font-mono text-slate-700">{attTotalCount}</td>
-                          <td className="px-3 py-2.5 text-right font-mono font-bold text-slate-800 border-r border-[#E6ECF2]">{r.attritionPercentage.toFixed(1)}%</td>
-
-                          {/* Hiring Funnel Counts */}
-                          <td className="px-3 py-2.5 text-center font-mono font-bold text-slate-800">{r.acceptedJO}</td>
-                          <td className="px-3 py-2.5 text-center font-mono text-slate-700">{r.nho}</td>
-                          <td className="px-3 py-2.5 text-center font-mono text-slate-700">{r.fst}</td>
-                          <td className="px-3 py-2.5 text-center font-mono text-slate-700">{r.pst}</td>
-                          <td className="px-3 py-2.5 text-center font-mono font-bold text-emerald-600 border-r border-[#E6ECF2]">{r.goLive}</td>
-
-                          {/* Attrition Between Stages */}
-                          <td className="px-2 py-2.5 text-center font-mono font-medium text-slate-700">{joNhoCnt}</td>
-                          <td className="px-2 py-2.5 text-center font-mono text-slate-500">{joNhoPct}%</td>
-                          <td className="px-2 py-2.5 text-center font-mono font-medium text-slate-700">{nhoFstCnt}</td>
-                          <td className="px-2 py-2.5 text-center font-mono text-slate-500">{nhoFstPct}%</td>
-                          <td className="px-2 py-2.5 text-center font-mono font-medium text-slate-700">{fstPstCnt}</td>
-                          <td className="px-2 py-2.5 text-center font-mono text-slate-500">{fstPstPct}%</td>
-                          <td className="px-2 py-2.5 text-center font-mono font-medium text-slate-700">{nhoPstCnt}</td>
-                          <td className="px-2 py-2.5 text-center font-mono text-slate-500">{nhoPstPct}%</td>
-                          <td className="px-2 py-2.5 text-center font-mono font-medium text-slate-700">{pstGoLiveCnt}</td>
-                          <td className="px-2 py-2.5 text-center font-mono text-slate-500 border-r border-[#E6ECF2]">{pstGoLivePct}%</td>
-
-                          {/* Final Hired & Rate */}
-                          <td className="px-3 py-2.5 text-right font-mono font-bold text-[#042C51]">{r.hiredCount}</td>
-                          <td className="px-3 py-2.5 text-right font-mono font-black text-[#FF5C28]">{r.hiringRate.toFixed(1)}%</td>
+                          <td className="px-2.5 py-2 text-right font-mono">
+                            <span className="font-bold text-[#E74C3C]">{r.attritionCount}</span>
+                            <span className="text-[10px] text-slate-400 ml-1">({r.attritionPercentage}%)</span>
+                          </td>
+                          <td className="px-2.5 py-2 text-right font-mono font-bold text-slate-800">{r.netActualHC}</td>
+                          <td className="px-2.5 py-2 text-right font-mono font-bold text-amber-600">{r.hiringNeeded}</td>
+                          <td className="px-2 py-2 text-center font-mono font-bold bg-slate-50/50">{r.acceptedJO}</td>
+                          <td className="px-2 py-2 text-center font-mono font-bold bg-slate-50/50">{r.nho}</td>
+                          <td className="px-2 py-2 text-center font-mono font-bold bg-slate-50/50">{r.fst}</td>
+                          <td className="px-2 py-2 text-center font-mono font-bold bg-slate-50/50">{r.pst}</td>
+                          <td className="px-2 py-2 text-center font-mono font-bold bg-slate-50/50 text-emerald-700">{r.goLive}</td>
+                          <td className="px-2.5 py-2 text-right font-mono font-bold text-slate-800">{r.hiredCount}</td>
+                          <td className="px-2.5 py-2 text-right font-mono font-black text-[#FF5C28]">{r.hiringRate}%</td>
                         </tr>
                       );
                     })
@@ -1015,9 +765,9 @@ export default function WorkforceHiringTrendDetailsModal({
             </div>
 
             {/* Table Footer Summary Row */}
-            <div className="bg-[#F8FAFC] p-3 rounded-xl border border-slate-200 flex flex-wrap items-center justify-between text-xs font-extrabold text-slate-700">
+            <div className="bg-slate-100 p-3 rounded-xl border border-slate-200 flex flex-wrap items-center justify-between text-xs font-extrabold text-slate-700">
               <div className="flex items-center gap-2">
-                <span>Total Filtered Accounts:</span>
+                <span>Total Filtered Units:</span>
                 <span className="bg-white px-2 py-0.5 rounded border border-slate-300 font-mono text-[#042C51]">
                   {filteredRecords.length} Accounts
                 </span>
@@ -1025,8 +775,7 @@ export default function WorkforceHiringTrendDetailsModal({
               <div className="flex items-center gap-4 font-mono">
                 <span>Total Req HC: <strong className="text-slate-900">{filteredRecords.reduce((acc, r) => acc + r.requiredHC, 0)}</strong></span>
                 <span>Total Act HC: <strong className="text-slate-900">{filteredRecords.reduce((acc, r) => acc + r.actualHC, 0)}</strong></span>
-                <span>6-Wk Total Attrition: <strong className="text-rose-600">{filteredRecords.reduce((acc, r) => acc + Math.round(r.attritionCount * 5.8), 0)}</strong></span>
-                <span>Total Hiring Needed: <strong className="text-emerald-700">{filteredRecords.reduce((acc, r) => acc + r.hiringNeeded, 0)}</strong></span>
+                <span>Total Hiring Needed: <strong className="text-amber-700">{filteredRecords.reduce((acc, r) => acc + r.hiringNeeded, 0)}</strong></span>
               </div>
             </div>
 

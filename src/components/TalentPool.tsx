@@ -186,6 +186,86 @@ export interface Candidate {
 
 const INITIAL_CANDIDATES: Candidate[] = [
   {
+    id: "PUB-20260814062943-401RQV",
+    name: "Robin One Piece",
+    email: "crislead1@gmail.com",
+    phone: "098550486661",
+    appliedPosition: "Collections Specialist (CD - Collect)",
+    department: "Call Center Operations",
+    accountFit: "CD - Collect",
+    sourcingChannel: "Applicant Lead (Walk-in)",
+    recruiter: "Crister Canitan",
+    applicationDate: "2026-08-13",
+    status: "Silver Pool",
+    isPublicEntry: true,
+    lastActivityDate: "2026-08-14",
+    notes: "Candidate converted and transferred from Inbound Applicant Leads Roster (Lead ID: LEAD-2026-0001). Initial Walk-in at Tagum City Center. Ready for financial collections wave.",
+
+    address: "Tagum City, Davao del Norte, Philippines",
+    dob: "1997-08-14",
+    age: 29,
+    gender: "Female",
+    civilStatus: "Single",
+    citizenship: "Filipino",
+
+    workExperience: [
+      {
+        company: "Global Collections Inc.",
+        position: "Inbound Collections Specialist",
+        industry: "BPO / Call Center",
+        tenure: "2 years 1 month",
+        monthlySalary: "₱26,000",
+        reasonForLeaving: "Sought career growth and competitive benefits at SiBS"
+      }
+    ],
+
+    education: [
+      {
+        level: "College",
+        schoolName: "University of Mindanao - Tagum",
+        degreeCourse: "BS Business Administration",
+        gradYear: "2021",
+        address: "Mabini St, Tagum City"
+      }
+    ],
+
+    skills: ["Financial Negotiation", "Debt Collection Standards", "Customer Engagement", "Voice Account Support"],
+    languages: ["English (Conversational B2)", "Filipino (Native)", "Cebuano"],
+
+    assessmentStatus: "Screened from Inbound Lead",
+    testScore: "88/100 (Collections & Versant Passed)",
+    overallResult: "Passed",
+    assessmentRemarks: "Excellent customer demeanor and strong objection handling skills during intake.",
+
+    vaccinationStatus: "Fully Vaccinated",
+    willingOnSite: true,
+    graveyardShiftReadiness: true,
+    employmentInterest: "Full-Time On-Site Tagum",
+
+    history: [
+      {
+        date: "2026-08-13",
+        action: "Inbound Applicant Lead logged (Lead ID: LEAD-2026-0001) via Walk-in at Tagum City site by Crister Canitan. Account Fit: CD - Collect.",
+        user: "Crister Canitan"
+      },
+      {
+        date: "2026-08-13",
+        action: "Application Form link sent to crislead1@gmail.com / 098550486661.",
+        user: "Crister Canitan"
+      },
+      {
+        date: "2026-08-14",
+        action: "Lead converted and transferred to Talent Pool Master Archive (Talent Pool ID: PUB-20260814062943-401RQV). Status set to Silver Pool.",
+        user: "Crister Canitan"
+      },
+      {
+        date: "2026-08-14",
+        action: "Profile synchronized with Sourcing Analytics and HR Pipeline.",
+        user: "Crister Canitan"
+      }
+    ]
+  },
+  {
     id: "SIBS-CAN-9021",
     name: "Althea Rose Vergara",
     email: "althea.vergara@gmail.com",
@@ -1641,7 +1721,7 @@ export default function TalentPool({
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-md overflow-hidden text-slate-900"
+              className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden text-slate-900"
             >
               <div className="p-4 bg-[#042C51] text-white flex items-center justify-between">
                 <div className="flex items-center gap-2">
@@ -1748,7 +1828,7 @@ export default function TalentPool({
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-md overflow-hidden text-slate-900"
+              className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden text-slate-900"
             >
               <div className="p-4 bg-[#042C51] text-white flex items-center justify-between">
                 <div className="flex items-center gap-2">

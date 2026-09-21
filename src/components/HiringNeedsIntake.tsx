@@ -3,7 +3,6 @@ import {
   Briefcase,
   Users,
   Plus,
-  Minus,
   RefreshCw,
   Search,
   SlidersHorizontal,
@@ -20,11 +19,7 @@ import {
   TrendingUp,
   Inbox,
   Sparkles,
-  Filter,
-  Building2,
-  Calendar,
-  Send,
-  MessageSquare
+  Filter
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 
@@ -743,294 +738,214 @@ export default function HiringNeedsIntake({ userEmail, onSwitchModule }: HiringN
       {/* ADD REQUISITION MODAL */}
       <AnimatePresence>
         {isAddModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-[#042C51]/80 backdrop-blur-sm overflow-y-auto">
+          <div className="fixed inset-0 bg-[#042C51]/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
             <motion.div
-              initial={{ opacity: 0, scale: 0.96, y: 10 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.96, y: 10 }}
-              transition={{ duration: 0.2 }}
-              className="bg-white rounded-2xl max-w-2xl w-full shadow-2xl border border-[#E6ECF2] my-6 flex flex-col max-h-[92vh] overflow-hidden text-[#101828]"
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-lg overflow-hidden text-slate-900"
             >
-              {/* Modal Header */}
-              <div className="bg-[#042C51] text-white p-5 px-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#063a6b] shrink-0">
+              <div className="bg-[#042C51] text-white p-4 sm:p-5 flex items-center justify-between border-b border-[#063866]">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-white/10 border border-white/20 text-[#FF5C28] flex items-center justify-center shadow-inner shrink-0">
-                    <Inbox className="w-5 h-5" />
+                  <div className="w-9 h-9 rounded-xl bg-white/10 border border-white/20 text-[#FF5C28] flex items-center justify-center shrink-0">
+                    <Inbox className="w-4.5 h-4.5" />
                   </div>
                   <div>
-                    <h2 className="text-lg font-black tracking-tight text-white flex items-center gap-2">
-                      <span>New Personnel Requisition</span>
-                      <span className="text-[10px] bg-[#FF5C28] text-white font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
-                        Intake
-                      </span>
-                    </h2>
-                    <p className="text-xs text-slate-300 leading-snug">
-                      Log headcount additions or operational quota updates.
-                    </p>
+                    <h2 className="text-sm sm:text-base font-black text-white tracking-tight">New Personnel Requisition</h2>
+                    <p className="text-[11px] text-slate-300 font-medium">Log headcount additions or updates</p>
                   </div>
                 </div>
-
-                <div className="flex items-center gap-2 self-end sm:self-center">
-                  <button
-                    type="button"
-                    onClick={() => setIsAddModalOpen(false)}
-                    className="p-1.5 text-slate-300 hover:text-white hover:bg-white/10 rounded-xl transition-all cursor-pointer ml-1"
-                    title="Close dialog"
-                  >
-                    <X className="w-5 h-5" />
-                  </button>
-                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsAddModalOpen(false)}
+                  className="p-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-slate-300 hover:text-white transition-all cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
               </div>
 
-              {/* Form Content */}
-              <form onSubmit={handleCreatePR} className="flex flex-col flex-1 overflow-hidden">
-                <div className="p-6 overflow-y-auto space-y-5 flex-1 bg-slate-50/50">
-                  
-                  {/* 1. Request Classification & Department */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    
-                    {/* Request Type Switcher */}
-                    <div>
-                      <label className="text-[10px] sm:text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1.5">
-                        Request Type *
-                      </label>
-                      <div className="grid grid-cols-2 gap-2 bg-white p-1 rounded-xl border border-[#E6ECF2]">
-                        <button
-                          type="button"
-                          onClick={() => setNewRequestType("Requisition")}
-                          className={`py-2 px-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
-                            newRequestType === "Requisition"
-                              ? "bg-[#042C51] text-white shadow-xs"
-                              : "text-slate-600 hover:bg-slate-100"
-                          }`}
-                        >
-                          <span>Requisition</span>
-                          <span className={`text-[9px] px-1.5 py-0.2 rounded-full font-extrabold ${
-                            newRequestType === "Requisition" ? "bg-emerald-500/20 text-emerald-300" : "bg-emerald-100 text-emerald-700"
-                          }`}>
-                            + Headcount
-                          </span>
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setNewRequestType("Downsize")}
-                          className={`py-2 px-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
-                            newRequestType === "Downsize"
-                              ? "bg-rose-600 text-white shadow-xs"
-                              : "text-slate-600 hover:bg-slate-100"
-                          }`}
-                        >
-                          <span>Downsize</span>
-                          <span className={`text-[9px] px-1.5 py-0.2 rounded-full font-extrabold ${
-                            newRequestType === "Downsize" ? "bg-white/20 text-white" : "bg-rose-100 text-rose-700"
-                          }`}>
-                            - Quota
-                          </span>
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Department */}
-                    <div>
-                      <label className="text-[10px] sm:text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1.5">
-                        Department *
-                      </label>
-                      <select
-                        value={newDepartment}
-                        onChange={(e) => setNewDepartment(e.target.value)}
-                        className="w-full px-3.5 py-2.5 bg-white border border-[#E6ECF2] rounded-xl text-xs sm:text-sm font-semibold text-[#101828] focus:outline-none focus:ring-2 focus:ring-[#042C51] focus:bg-white transition-all shadow-xs"
+              <form onSubmit={handleCreatePR} className="p-6 space-y-4">
+                
+                <div className="grid grid-cols-2 gap-4">
+                  {/* Request Type */}
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Request Type</label>
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setNewRequestType("Requisition")}
+                        className={`flex-1 py-1.5 rounded-lg text-xs font-extrabold border transition-all ${
+                          newRequestType === "Requisition"
+                            ? "bg-[#042C51] text-white border-[#042C51]"
+                            : "bg-slate-50 text-slate-600 border-slate-200"
+                        }`}
                       >
-                        <option value="Telecom & Tech Support">Telecom & Tech Support</option>
-                        <option value="Healthcare & Insurance">Healthcare & Insurance</option>
-                        <option value="Financial Services Group">Financial Services Group</option>
-                        <option value="Retail & E-Commerce">Retail & E-Commerce</option>
-                      </select>
+                        Requisition (+ Headcount)
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setNewRequestType("Downsize")}
+                        className={`flex-1 py-1.5 rounded-lg text-xs font-extrabold border transition-all ${
+                          newRequestType === "Downsize"
+                            ? "bg-rose-50 text-rose-700 border-rose-300"
+                            : "bg-slate-50 text-slate-600 border-slate-200"
+                        }`}
+                      >
+                        Downsize (- Quota)
+                      </button>
                     </div>
                   </div>
 
-                  {/* 2. Account & Position Details */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {/* Account Client */}
-                    <div>
-                      <label className="text-[10px] sm:text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1.5">
-                        Account Client *
-                      </label>
-                      <select
-                        value={newAccount}
-                        onChange={(e) => setNewAccount(e.target.value)}
-                        className="w-full px-3.5 py-2.5 bg-white border border-[#E6ECF2] rounded-xl text-xs sm:text-sm font-semibold text-[#101828] focus:outline-none focus:ring-2 focus:ring-[#042C51] focus:bg-white transition-all shadow-xs"
-                      >
-                        <option value="Verizon Tech">Verizon Tech</option>
-                        <option value="Comcast Technical">Comcast Technical</option>
-                        <option value="T-Mobile Care">T-Mobile Care</option>
-                        <option value="UnitedHealth VIP">UnitedHealth VIP</option>
-                        <option value="Chase Credit">Chase Credit</option>
-                        <option value="Amazon Care">Amazon Care</option>
-                      </select>
-                    </div>
-
-                    {/* Job Title */}
-                    <div>
-                      <label className="text-[10px] sm:text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1.5">
-                        Job Title *
-                      </label>
-                      <input
-                        type="text"
-                        placeholder="e.g. Customer Service Representative"
-                        required
-                        value={newJobTitle}
-                        onChange={(e) => setNewJobTitle(e.target.value)}
-                        className="w-full px-3.5 py-2.5 bg-white border border-[#E6ECF2] rounded-xl text-xs sm:text-sm font-semibold text-[#101828] placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#042C51] focus:bg-white transition-all shadow-xs"
-                      />
-                    </div>
+                  {/* Department */}
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Department</label>
+                    <select
+                      value={newDepartment}
+                      onChange={(e) => setNewDepartment(e.target.value)}
+                      className="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold focus:outline-none focus:bg-white"
+                    >
+                      <option value="Telecom & Tech Support">Telecom & Tech Support</option>
+                      <option value="Healthcare & Insurance">Healthcare & Insurance</option>
+                      <option value="Financial Services Group">Financial Services Group</option>
+                      <option value="Retail & E-Commerce">Retail & E-Commerce</option>
+                    </select>
                   </div>
-
-                  {/* 3. JD Code & Headcount Control */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {/* JD Code */}
-                    <div>
-                      <label className="text-[10px] sm:text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1.5">
-                        Job Description (JD) Code *
-                      </label>
-                      <select
-                        value={newJdCode}
-                        onChange={(e) => setNewJdCode(e.target.value)}
-                        className="w-full px-3.5 py-2.5 bg-white border border-[#E6ECF2] rounded-xl text-xs sm:text-sm font-semibold text-[#101828] focus:outline-none focus:ring-2 focus:ring-[#042C51] focus:bg-white transition-all shadow-xs"
-                      >
-                        <option value="JD-CSR-TEL-04">JD-CSR-TEL-04 (Tech Specialist)</option>
-                        <option value="JD-TECH-HC-09">JD-TECH-HC-09 (Tier 2)</option>
-                        <option value="JD-FIN-FRD-01">JD-FIN-FRD-01 (Fraud)</option>
-                        <option value="JD-MGR-TL-02">JD-MGR-TL-02 (Team Leader)</option>
-                        <option value="JD-HC-CLM-03">JD-HC-CLM-03 (Claims)</option>
-                      </select>
-                    </div>
-
-                    {/* Required Headcount */}
-                    <div>
-                      <div className="flex justify-between items-center mb-1.5">
-                        <label className="text-[10px] sm:text-xs font-bold text-slate-500 uppercase tracking-wider">
-                          Required Headcount (Slots) *
-                        </label>
-                        <span className="text-[10px] text-slate-400 font-mono font-bold">Max 150</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <button
-                          type="button"
-                          onClick={() => setNewHeadcount(Math.max(1, newHeadcount - 1))}
-                          className="w-9 h-9 rounded-xl bg-slate-100 hover:bg-slate-200 text-[#042C51] font-extrabold flex items-center justify-center transition-all cursor-pointer border border-slate-200 shrink-0"
-                        >
-                          <Minus className="w-3.5 h-3.5" />
-                        </button>
-                        <input
-                          type="number"
-                          min={1}
-                          max={150}
-                          required
-                          value={newHeadcount}
-                          onChange={(e) => setNewHeadcount(Math.max(1, Number(e.target.value)))}
-                          className="w-full text-center px-3 py-2 bg-white border border-[#E6ECF2] rounded-xl text-sm font-bold text-[#042C51] font-mono focus:outline-none focus:ring-2 focus:ring-[#042C51]"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setNewHeadcount(Math.min(150, newHeadcount + 1))}
-                          className="w-9 h-9 rounded-xl bg-slate-100 hover:bg-slate-200 text-[#042C51] font-extrabold flex items-center justify-center transition-all cursor-pointer border border-slate-200 shrink-0"
-                        >
-                          <Plus className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* 4. Hiring Reason, Location & Target Date */}
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    {/* Reason */}
-                    <div>
-                      <label className="text-[10px] sm:text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1.5">
-                        Reason for Hiring
-                      </label>
-                      <select
-                        value={newReason}
-                        onChange={(e) => setNewReason(e.target.value)}
-                        className="w-full px-3.5 py-2.5 bg-white border border-[#E6ECF2] rounded-xl text-xs sm:text-sm font-semibold text-[#101828] focus:outline-none focus:ring-2 focus:ring-[#042C51] transition-all shadow-xs"
-                      >
-                        <option value="Ramp-up">Ramp-up</option>
-                        <option value="Backfill">Backfill</option>
-                        <option value="New Position">New Position</option>
-                        <option value="Forecasted Growth">Forecasted Growth</option>
-                      </select>
-                    </div>
-
-                    {/* Location */}
-                    <div>
-                      <label className="text-[10px] sm:text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1.5">
-                        Location / Site
-                      </label>
-                      <select
-                        value={newLocation}
-                        onChange={(e) => setNewLocation(e.target.value)}
-                        className="w-full px-3.5 py-2.5 bg-white border border-[#E6ECF2] rounded-xl text-xs sm:text-sm font-semibold text-[#101828] focus:outline-none focus:ring-2 focus:ring-[#042C51] transition-all shadow-xs"
-                      >
-                        <option value="Davao">Davao Hub</option>
-                        <option value="Tagum">Tagum Office</option>
-                        <option value="Mabini">Mabini Site</option>
-                      </select>
-                    </div>
-
-                    {/* Date Needed */}
-                    <div>
-                      <label className="text-[10px] sm:text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1.5">
-                        Date Needed By
-                      </label>
-                      <input
-                        type="date"
-                        value={newDateNeeded}
-                        onChange={(e) => setNewDateNeeded(e.target.value)}
-                        className="w-full px-3.5 py-2.5 bg-white border border-[#E6ECF2] rounded-xl text-xs sm:text-sm font-semibold text-[#101828] focus:outline-none focus:ring-2 focus:ring-[#042C51] transition-all shadow-xs"
-                      />
-                    </div>
-                  </div>
-
-                  {/* 5. Context / Remarks */}
-                  <div>
-                    <div className="flex justify-between items-center mb-1.5">
-                      <label className="text-[10px] sm:text-xs font-bold text-slate-500 uppercase tracking-wider block">
-                        Request Details / Context Remarks
-                      </label>
-                      <span className="text-[10px] font-mono text-slate-400">
-                        {newDetails.length} / 300 chars
-                      </span>
-                    </div>
-                    <textarea
-                      rows={3}
-                      maxLength={300}
-                      placeholder="Briefly describe the specific request context, client growth goals, and target timeline expectations..."
-                      value={newDetails}
-                      onChange={(e) => setNewDetails(e.target.value)}
-                      className="w-full px-3.5 py-2.5 bg-white border border-[#E6ECF2] rounded-xl text-xs sm:text-sm font-medium text-[#101828] placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#042C51] resize-none leading-relaxed shadow-xs"
-                    />
-                  </div>
-
                 </div>
 
-                {/* Footer Action Buttons */}
-                <div className="p-4 px-6 bg-white border-t border-slate-200 flex items-center justify-end gap-3 shrink-0">
+                <div className="grid grid-cols-2 gap-4">
+                  {/* Account */}
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Account client</label>
+                    <select
+                      value={newAccount}
+                      onChange={(e) => setNewAccount(e.target.value)}
+                      className="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold focus:outline-none focus:bg-white"
+                    >
+                      <option value="Verizon Tech">Verizon Tech</option>
+                      <option value="Comcast Technical">Comcast Technical</option>
+                      <option value="T-Mobile Care">T-Mobile Care</option>
+                      <option value="UnitedHealth VIP">UnitedHealth VIP</option>
+                      <option value="Chase Credit">Chase Credit</option>
+                      <option value="Amazon Care">Amazon Care</option>
+                    </select>
+                  </div>
+
+                  {/* Job Title */}
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Job Title</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Customer Service Representative"
+                      required
+                      value={newJobTitle}
+                      onChange={(e) => setNewJobTitle(e.target.value)}
+                      className="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold focus:outline-none focus:bg-white"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  {/* JD Code */}
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Job Description (JD) Code</label>
+                    <select
+                      value={newJdCode}
+                      onChange={(e) => setNewJdCode(e.target.value)}
+                      className="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold focus:outline-none focus:bg-white"
+                    >
+                      <option value="JD-CSR-TEL-04">JD-CSR-TEL-04 (Tech Specialist)</option>
+                      <option value="JD-TECH-HC-09">JD-TECH-HC-09 (Tier 2)</option>
+                      <option value="JD-FIN-FRD-01">JD-FIN-FRD-01 (Fraud)</option>
+                      <option value="JD-MGR-TL-02">JD-MGR-TL-02 (Team Leader)</option>
+                      <option value="JD-HC-CLM-03">JD-HC-CLM-03 (Claims)</option>
+                    </select>
+                  </div>
+
+                  {/* Headcount */}
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Required Headcount (slots)</label>
+                    <input
+                      type="number"
+                      min={1}
+                      max={150}
+                      required
+                      value={newHeadcount}
+                      onChange={(e) => setNewHeadcount(Number(e.target.value))}
+                      className="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold focus:outline-none focus:bg-white font-mono font-bold"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-3 gap-4">
+                  {/* Reason */}
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Reason for Hiring</label>
+                    <select
+                      value={newReason}
+                      onChange={(e) => setNewReason(e.target.value)}
+                      className="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold focus:outline-none focus:bg-white"
+                    >
+                      <option value="Ramp-up">Ramp-up</option>
+                      <option value="Backfill">Backfill</option>
+                      <option value="New Position">New Position</option>
+                      <option value="Forecasted Growth">Forecasted Growth</option>
+                    </select>
+                  </div>
+
+                  {/* Location */}
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Location / Site</label>
+                    <select
+                      value={newLocation}
+                      onChange={(e) => setNewLocation(e.target.value)}
+                      className="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold focus:outline-none focus:bg-white"
+                    >
+                      <option value="Davao">Davao Hub</option>
+                      <option value="Tagum">Tagum Office</option>
+                      <option value="Mabini">Mabini Site</option>
+                    </select>
+                  </div>
+
+                  {/* Date Needed */}
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Date Needed By</label>
+                    <input
+                      type="date"
+                      value={newDateNeeded}
+                      onChange={(e) => setNewDateNeeded(e.target.value)}
+                      className="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold focus:outline-none focus:bg-white"
+                    />
+                  </div>
+                </div>
+
+                {/* Narrative Details */}
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Request Details / Context Remarks</label>
+                  <textarea
+                    rows={2}
+                    placeholder="Briefly describe the specific request context, client goals, and target timeline expectations..."
+                    value={newDetails}
+                    onChange={(e) => setNewDetails(e.target.value)}
+                    className="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold focus:outline-none focus:bg-white resize-none"
+                  />
+                </div>
+
+                <div className="pt-3 border-t border-slate-100 flex items-center justify-end gap-2.5">
                   <button
                     type="button"
                     onClick={() => setIsAddModalOpen(false)}
-                    className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 rounded-xl text-xs font-bold transition-all cursor-pointer"
+                    className="px-4 py-2 bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 rounded-xl text-xs font-bold transition-all cursor-pointer"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
-                    className="px-5 py-2 bg-[#FF5C28] hover:bg-[#e04f20] active:scale-98 text-white rounded-xl text-xs font-bold transition-all shadow-md flex items-center gap-1.5 cursor-pointer border border-orange-400/30"
+                    className="px-5 py-2 bg-[#042C51] hover:bg-[#FF5C28] text-white rounded-xl text-xs font-black transition-all shadow-xs cursor-pointer"
                   >
-                    <Send className="w-3.5 h-3.5" />
-                    <span>Submit Requisition</span>
+                    Submit Requisition
                   </button>
                 </div>
               </form>
-
             </motion.div>
           </div>
         )}
@@ -1039,93 +954,81 @@ export default function HiringNeedsIntake({ userEmail, onSwitchModule }: HiringN
       {/* VIEW REQUISITION DETAILS MODAL */}
       <AnimatePresence>
         {selectedPR && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-[#042C51]/80 backdrop-blur-sm overflow-y-auto">
+          <div className="fixed inset-0 bg-[#042C51]/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
             <motion.div
-              initial={{ opacity: 0, scale: 0.96, y: 10 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.96, y: 10 }}
-              transition={{ duration: 0.2 }}
-              className="bg-white rounded-2xl max-w-xl w-full shadow-2xl border border-[#E6ECF2] my-6 flex flex-col max-h-[92vh] overflow-hidden text-[#101828]"
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="bg-white rounded-2xl shadow-2xl w-full max-w-xl overflow-hidden text-slate-900"
             >
-              {/* Header */}
-              <div className="bg-[#042C51] text-white p-5 px-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#063a6b] shrink-0">
+              <div className="bg-[#042C51] text-white p-4 sm:p-5 flex items-center justify-between border-b border-[#063866]">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-white/10 border border-white/20 text-[#FF5C28] flex items-center justify-center shadow-inner shrink-0">
-                    <FileText className="w-5 h-5" />
+                  <div className="w-9 h-9 rounded-xl bg-white/10 border border-white/20 text-[#FF5C28] flex items-center justify-center shrink-0">
+                    <FileText className="w-4.5 h-4.5" />
                   </div>
                   <div>
-                    <h2 className="text-lg font-black tracking-tight text-white flex items-center gap-2">
-                      <span>Requisition Details</span>
-                      <span className="text-[10px] bg-[#FF5C28] text-white font-bold px-2 py-0.5 rounded-full uppercase tracking-wider font-mono">
-                        {selectedPR.id}
-                      </span>
-                    </h2>
-                    <p className="text-xs text-slate-300 leading-snug">
-                      View personnel headcount request specifications and approval history.
-                    </p>
+                    <h2 className="text-sm sm:text-base font-black text-white tracking-tight">Personnel Requisition Form Details</h2>
+                    <p className="text-[11px] text-slate-300 font-mono font-bold">{selectedPR.id}</p>
                   </div>
                 </div>
-
                 <button
                   type="button"
                   onClick={() => setSelectedPR(null)}
-                  className="p-1.5 text-slate-300 hover:text-white hover:bg-white/10 rounded-xl transition-all cursor-pointer ml-1"
-                  title="Close dialog"
+                  className="p-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-slate-300 hover:text-white transition-all cursor-pointer"
                 >
-                  <X className="w-5 h-5" />
+                  <X className="w-4 h-4" />
                 </button>
               </div>
 
-              {/* Scrollable Content */}
-              <div className="p-6 overflow-y-auto space-y-5 flex-1 bg-slate-50/50">
-                <div className="grid grid-cols-2 gap-4 bg-white p-4.5 rounded-2xl border border-[#E6ECF2] shadow-xs">
+              <div className="p-6 space-y-5 overflow-y-auto max-h-[80vh]">
+                <div className="grid grid-cols-2 gap-4 bg-slate-50 p-4 rounded-xl border border-slate-200/60">
                   
                   <div>
-                    <span className="text-[10px] font-bold text-slate-400 uppercase block mb-0.5">Department</span>
+                    <span className="text-[9px] font-bold text-slate-400 uppercase block">Department</span>
                     <span className="text-xs font-extrabold text-[#042C51] block">{selectedPR.department}</span>
                   </div>
                   <div>
-                    <span className="text-[10px] font-bold text-slate-400 uppercase block mb-0.5">Account Client</span>
+                    <span className="text-[9px] font-bold text-slate-400 uppercase block">Account Client</span>
                     <span className="text-xs font-extrabold text-[#042C51] block">{selectedPR.account}</span>
                   </div>
 
                   <div>
-                    <span className="text-[10px] font-bold text-slate-400 uppercase block mb-0.5">Job Title</span>
+                    <span className="text-[9px] font-bold text-slate-400 uppercase block">Job Title</span>
                     <span className="text-xs font-extrabold text-[#042C51] block">{selectedPR.jobTitle}</span>
                   </div>
                   <div>
-                    <span className="text-[10px] font-bold text-slate-400 uppercase block mb-0.5">JD Code / Specification</span>
+                    <span className="text-[9px] font-bold text-slate-400 uppercase block">JD Code / Specification</span>
                     <span className="text-xs font-bold text-[#FF5C28] font-mono block">{selectedPR.jdCode}</span>
                   </div>
 
                   <div>
-                    <span className="text-[10px] font-bold text-slate-400 uppercase block mb-0.5">Headcount (Required Slots)</span>
+                    <span className="text-[9px] font-bold text-slate-400 uppercase block">Headcount (Required Slots)</span>
                     <span className="text-sm font-black text-slate-800 font-mono block">{selectedPR.headcount} slots</span>
                   </div>
                   <div>
-                    <span className="text-[10px] font-bold text-slate-400 uppercase block mb-0.5">Primary Reason</span>
+                    <span className="text-[9px] font-bold text-slate-400 uppercase block">Primary Reason</span>
                     <span className="text-xs font-bold text-indigo-600 block">{selectedPR.reason}</span>
                   </div>
 
                   <div>
-                    <span className="text-[10px] font-bold text-slate-400 uppercase block mb-0.5">Location / Site Target</span>
+                    <span className="text-[9px] font-bold text-slate-400 uppercase block">Location / Site Target</span>
                     <span className="text-xs font-semibold text-slate-700 block">{selectedPR.location} Site</span>
                   </div>
                   <div>
-                    <span className="text-[10px] font-bold text-slate-400 uppercase block mb-0.5">Date Needed By</span>
+                    <span className="text-[9px] font-bold text-slate-400 uppercase block">Date Needed By</span>
                     <span className="text-xs font-bold text-indigo-600 block">{selectedPR.dateNeeded}</span>
                   </div>
 
                   <div>
-                    <span className="text-[10px] font-bold text-slate-400 uppercase block mb-0.5">Filed By Operator</span>
+                    <span className="text-[9px] font-bold text-slate-400 uppercase block">Filed By Operator</span>
                     <span className="text-xs font-bold text-slate-700 block">
                       {selectedPR.filedBy.name} ({selectedPR.filedBy.role})
                     </span>
                   </div>
                   <div>
-                    <span className="text-[10px] font-bold text-slate-400 uppercase block mb-0.5">Approval Status</span>
+                    <span className="text-[9px] font-bold text-slate-400 uppercase block">Approval Status</span>
                     <span
-                      className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase mt-1 ${
+                      className={`inline-block px-2 py-0.5 rounded text-[9px] font-black uppercase mt-1 ${
                         selectedPR.status === "Approved"
                           ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
                           : selectedPR.status === "For Approval"
@@ -1140,16 +1043,16 @@ export default function HiringNeedsIntake({ userEmail, onSwitchModule }: HiringN
                 </div>
 
                 {selectedPR.remarks && (
-                  <div className="p-4 bg-white border border-[#E6ECF2] rounded-2xl shadow-xs">
-                    <span className="text-[10px] font-black text-[#042C51] uppercase tracking-wider block mb-1">HR/OM Remarks Context</span>
-                    <p className="text-xs text-slate-700 leading-relaxed font-medium">{selectedPR.remarks}</p>
+                  <div className="p-3 bg-indigo-50/50 border border-indigo-100 rounded-lg">
+                    <span className="text-[9px] font-black text-indigo-600 uppercase tracking-wide block mb-0.5">HR/OM Remarks Context</span>
+                    <p className="text-xs text-slate-700 leading-normal font-semibold">{selectedPR.remarks}</p>
                   </div>
                 )}
 
                 {/* History Timeline */}
-                <div className="space-y-3 bg-white p-4.5 rounded-2xl border border-[#E6ECF2] shadow-xs">
+                <div className="space-y-3">
                   <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-wider">Form Action Audit Trail</h3>
-                  <div className="space-y-3 pl-1">
+                  <div className="space-y-3 pl-2">
                     {selectedPR.history.map((hist, idx) => (
                       <div key={idx} className="flex gap-3 relative">
                         {idx !== selectedPR.history.length - 1 && (
