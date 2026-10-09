@@ -49,8 +49,13 @@ import {
   ChevronDown,
   Code2,
   Copy,
-  Check
+  Check,
+  GitFork,
+  TrendingDown,
+  Split,
+  Key
 } from "lucide-react";
+import PersonnelRequisitionModal, { RequisitionFormData } from "./PersonnelRequisitionModal";
 import { motion, AnimatePresence } from "motion/react";
 import { FlowchartProcessId } from "./flowchart/flowchartTypes";
 import { MERMAID_DIAGRAMS } from "./flowchart/flowchartData";
@@ -64,6 +69,126 @@ interface RecruitmentFlowchartProps {
   onSwitchModule?: (moduleKey: string) => void;
   onClose?: () => void;
 }
+
+export interface AccessNode {
+  id: string;
+  code: string;
+  title: string;
+  subtitle: string;
+  badge: string;
+  badgeColor: string;
+  icon: React.ComponentType<{ className?: string }>;
+  roles: string[];
+  description: string;
+  bullets: string[];
+  keyActions: string[];
+  sla: string;
+  moduleKey: string;
+  btnLabel: string;
+}
+
+export const ACCESS_CONTROL_NODES: AccessNode[] = [
+  {
+    id: "acc-auth",
+    code: "ACC-01",
+    title: "Authentication & Session Gate",
+    subtitle: "IDENTITY VERIFICATION & SECURE SESSION HANDSHAKE",
+    badge: "Security Gate",
+    badgeColor: "bg-[#042C51] text-white",
+    icon: Key,
+    roles: ["All Users", "Super Admin", "OM", "HR/TA", "Employee"],
+    description: "Multi-factor authentication (MFA), Single Sign-On (SSO), and JWT token minting validating user identity against organizational directory before granting workspace entry.",
+    bullets: [
+      "Credential Validation",
+      "Session Expiry Guard",
+      "Audit Log Entry"
+    ],
+    keyActions: ["Credential Validation", "Session Expiry Guard", "Audit Log Entry"],
+    sla: "Instant (<250ms)",
+    moduleKey: "Account Settings",
+    btnLabel: "View Account Settings"
+  },
+  {
+    id: "acc-super-admin",
+    code: "ACC-02",
+    title: "Super Admin Account",
+    subtitle: "FULL ECOSYSTEM GOVERNANCE & SECURITY ADMINISTRATION",
+    badge: "Role Tier 4",
+    badgeColor: "bg-purple-700 text-white",
+    icon: ShieldCheck,
+    roles: ["Super Admin", "Executive Director"],
+    description: "Highest authorization tier with unrestricted rights: department management, office locations, security policies, global system audit logs, and account-level overrides.",
+    bullets: [
+      "Manage Departments & Sites",
+      "Configure RBAC Matrix",
+      "Audit System Activities"
+    ],
+    keyActions: ["Manage Departments & Sites", "Configure RBAC Matrix", "Audit System Activities"],
+    sla: "Continuous / Always-on",
+    moduleKey: "Super Admin Dashboard",
+    btnLabel: "View Super Admin Dashboard"
+  },
+  {
+    id: "acc-ops-manager",
+    code: "ACC-03",
+    title: "Operations Manager Account",
+    subtitle: "HEADCOUNT DEMAND & WORKFORCE AUTHORIZATION",
+    badge: "Role Tier 3",
+    badgeColor: "bg-[#1D68BD] text-white",
+    icon: Briefcase,
+    roles: ["Operations Manager (OM)", "Account Lead", "SOM"],
+    description: "Operational leadership tier: initiates hiring needs requisitions, monitors campaign staffing ramps, approves shift schedules, endorses leave applications, and reviews resignations.",
+    bullets: [
+      "Initiate Requisitions & RAMPS",
+      "Review Department Overtime",
+      "Approve Staff Movements"
+    ],
+    keyActions: ["Initiate Requisitions & RAMPS", "Review Department Overtime", "Approve Staff Movements"],
+    sla: "Daily Business Ops",
+    moduleKey: "Workforce Hiring",
+    btnLabel: "View Ops Dashboard"
+  },
+  {
+    id: "acc-ta-recruiter",
+    code: "ACC-04",
+    title: "HR & TA Recruiter Account",
+    subtitle: "TALENT SOURCING, INTERVIEWS & HIRING PIPELINE",
+    badge: "Role Tier 2",
+    badgeColor: "bg-[#FF5C28] text-white",
+    icon: Users,
+    roles: ["HR & TA Team", "Recruiter", "Sourcing Specialist"],
+    description: "Talent acquisition execution tier: manages job requisitions, sources applicant leads, screens talent pools, facilitates pipeline stages, extends offers, and prepares new hires for Day 1.",
+    bullets: [
+      "Screen Candidate Pool",
+      "Schedule & Log Interviews",
+      "Generate Job Offers & Contracts"
+    ],
+    keyActions: ["Screen Candidate Applications", "Conduct Behavioral Interviews", "Draft Offer & Onboarding"],
+    sla: "Active Campaign Hours",
+    moduleKey: "Recruitment",
+    btnLabel: "Open Candidate Pipeline"
+  },
+  {
+    id: "acc-employee",
+    code: "ACC-05",
+    title: "Employee Self-Service (201)",
+    subtitle: "EMPLOYEE PROFILE, DTR ATTENDANCE & LEAVES",
+    badge: "Role Tier 1",
+    badgeColor: "bg-[#0E8773] text-white",
+    icon: UserCheck,
+    roles: ["All Active Staff", "Agent", "Team Lead"],
+    description: "Standard employee self-service tier: view personal employment masterfile, clock biometric logs, view Daily Time Records (DTR), file leave requests, and submit voluntary resignations.",
+    bullets: [
+      "Clock In/Out Biometrics",
+      "File Leave & Overtime Requests",
+      "View Payslips & 201 Records"
+    ],
+    keyActions: ["Clock Daily Attendance", "File Vacation/Sick Leaves", "Submit Resignation Notice"],
+    sla: "Mobile & Web Portal",
+    moduleKey: "Core HRIS",
+    btnLabel: "Access Employee Portal"
+  }
+];
 
 export interface FlowStep {
   id: number;
@@ -98,8 +223,8 @@ export const FLOW_STEPS: FlowStep[] = [
   {
     id: 1,
     phaseId: 1,
-    title: "1. Hiring Need / Manpower Request",
-    subtitle: "Create Hiring Need",
+    title: "1. Hiring Need / M...",
+    subtitle: "CREATE HIRING NEED",
     category: "plan",
     headerColor: "bg-[#1D68BD] text-white",
     lightBg: "bg-blue-50/60",
@@ -118,9 +243,21 @@ export const FLOW_STEPS: FlowStep[] = [
     linkedModule: "Hiring Needs Intake",
     roleOwner: "Operations Manager (OM) / Account Lead",
     slaDays: "1 - 2 Business Days",
-    description: "The initiating step where operational accounts forecast and declare workforce deficits or replacement staffing requirements.",
-    inputs: ["Account Profile", "Capacity Gap Analysis", "Target Deployment Date", "Budget Allocation Code"],
-    outputs: ["Manpower Intake Ticket (MNP-REQ)", "Headcount Ramp Forecast", "Draft Intake Record"]
+    description: "The initiating step where operational accounts forecast and declare workforce deficits or replacement staffing requirements (Requisition vs Downsizing).",
+    inputs: [
+      "Department / Account (Auto-populated from position)",
+      "Position Title (Select from active Talent Pool positions)",
+      "Request Type: Requisition (+ Headcount) vs Downsize (- Quota)",
+      "Headcount (Enter requested headcount)",
+      "Reason for Hiring (Ramp-up, Backfill, New Position, Forecasted Growth)",
+      "Assignment (Probationary, Regular, Project-Based)",
+      "Location / Site (Davao Site, Tagum HQ, Mabini Campus)",
+      "Date Needed (Select Date Needed)",
+      "SIBS ID Manager (6496)",
+      "Hiring Manager (CANITAN, CRISTER ALBERCA)",
+      "Approval Status: For Approval"
+    ],
+    outputs: ["Personnel Requisition Ticket (MNP-REQ)", "Headcount Ramp Forecast", "Draft Intake Record"]
   },
   {
     id: 2,
@@ -534,6 +671,10 @@ export default function RecruitmentFlowchart({ onSwitchModule, onClose }: Recrui
   const [isInspectorOpen, setIsInspectorOpen] = useState(true);
   const [showRejectionLoops, setShowRejectionLoops] = useState(true);
   const [isAnimatedFlow, setIsAnimatedFlow] = useState(true);
+  const [isRequisitionModalOpen, setIsRequisitionModalOpen] = useState(false);
+  const [hiringSplitMode, setHiringSplitMode] = useState<"requisition" | "downsizing" | "both">("requisition");
+  const [accessFlowMode, setAccessFlowMode] = useState<"branching" | "governance">("branching");
+  const [selectedAccessNodeId, setSelectedAccessNodeId] = useState<string | null>(null);
 
   // Dynamic step states for user interactivity simulation
   const [stepStates, setStepStates] = useState<Record<number, {
@@ -553,6 +694,10 @@ export default function RecruitmentFlowchart({ onSwitchModule, onClose }: Recrui
   const selectedStep = useMemo(() => {
     return FLOW_STEPS.find(s => s.id === selectedStepId) || FLOW_STEPS[0];
   }, [selectedStepId]);
+
+  const activeAccessNode = useMemo(() => {
+    return selectedAccessNodeId ? ACCESS_CONTROL_NODES.find(n => n.id === selectedAccessNodeId) || null : null;
+  }, [selectedAccessNodeId]);
 
   // Simulation timer walkthrough
   React.useEffect(() => {
@@ -764,7 +909,7 @@ export default function RecruitmentFlowchart({ onSwitchModule, onClose }: Recrui
               <div className="flex items-center gap-2">
                 <h1 className="text-xl sm:text-2xl font-black text-[#042C51] tracking-tight">
                   {activeProcessTab === "process-1-ia" && "1. High-Level Information Architecture Flowchart"}
-                  {activeProcessTab === "process-2-recruitment" && "2. End-to-End Recruitment & Talent Acquisition Pipeline"}
+                  {activeProcessTab === "process-2-recruitment" && "2. Recruitment & TA Pipeline Flowchart"}
                   {activeProcessTab === "process-3-workforce" && "3. Workforce Planning & Capacity Ramp Flowchart"}
                   {activeProcessTab === "process-4-core-hr" && "4. Core HR, Attendance & Lifecycle Flowchart"}
                   {activeProcessTab === "process-5-governance" && "5. Organizational & Administrative Governance Flowchart"}
@@ -776,7 +921,7 @@ export default function RecruitmentFlowchart({ onSwitchModule, onClose }: Recrui
               </div>
               <p className="text-xs text-slate-500 font-medium mt-0.5">
                 {activeProcessTab === "process-1-ia" && "Complete structural hierarchy mapping all 6 main functional branches and 26 interconnected sub-modules across the SiBS HRIS Ecosystem."}
-                {activeProcessTab === "process-2-recruitment" && "From hiring request to employee onboarding — Complete candidate journey across Demand, Sourcing, Talent Pool & Onboarding."}
+                {activeProcessTab === "process-2-recruitment" && "From account access level governance & personnel requisition to candidate onboarding — Complete talent pipeline & workforce journey."}
                 {activeProcessTab === "process-3-workforce" && "Account hiring requests, buffer variance computations, and dual-mode Overview vs. Plan Drawer execution."}
                 {activeProcessTab === "process-4-core-hr" && "Daily biometric time tracking, supervisor discrepancy review, leave approvals, and resignation clearances."}
                 {activeProcessTab === "process-5-governance" && "Master administrative infrastructure across 7 divisions, 3 multi-campus facilities, and scoring rules."}
@@ -898,15 +1043,16 @@ export default function RecruitmentFlowchart({ onSwitchModule, onClose }: Recrui
               {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
             </button>
 
-            {onClose && (
-              <button
-                onClick={onClose}
-                className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition-all cursor-pointer"
-                title="Close Flowchart"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            )}
+            {/* Close Button at top right corner */}
+            <button
+              id="close-flowchart-button"
+              onClick={onClose || (() => onSwitchModule?.("Workforce Hiring"))}
+              className="flex items-center gap-1.5 px-3.5 py-1.5 bg-rose-50 hover:bg-rose-600 text-rose-700 hover:text-white border border-rose-200 hover:border-rose-600 text-xs font-black rounded-xl transition-all cursor-pointer shadow-xs ml-1"
+              title="Close Flowchart"
+            >
+              <X className="w-4 h-4" />
+              <span>Close</span>
+            </button>
           </div>
         </div>
 
@@ -952,7 +1098,7 @@ export default function RecruitmentFlowchart({ onSwitchModule, onClose }: Recrui
                   : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50"
               }`}
             >
-              <Users className="w-3.5 h-3.5" />
+              <GitFork className="w-3.5 h-3.5" />
               <span>2. Recruitment & TA Pipeline</span>
             </button>
 
@@ -1006,12 +1152,13 @@ export default function RecruitmentFlowchart({ onSwitchModule, onClose }: Recrui
           </div>
         </div>
 
-        {/* ==================== 2. TOOLBAR: PHASE TABS & LIVE SIMULATION STORY TICKER (FOR RECRUITMENT PIPELINE) ==================== */}
+        {/* ==================== 2. TOOLBAR: PHASE TABS & LIVE SIMULATION STORY TICKER (FOR TAB 2) ==================== */}
         {activeProcessTab === "process-2-recruitment" && (
           <>
             <div className="mt-3.5 pt-3 border-t border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-3">
               {/* Phase Filter Tabs */}
               <div className="flex items-center gap-1.5 overflow-x-auto text-xs font-bold">
+                <span className="text-[10px] font-black uppercase text-slate-400 mr-1">Phase Filter:</span>
                 <button
                   onClick={() => setPhaseFilter("all")}
                   className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer whitespace-nowrap ${
@@ -1064,28 +1211,18 @@ export default function RecruitmentFlowchart({ onSwitchModule, onClose }: Recrui
                 </button>
               </div>
 
-              {/* Search Steps Input */}
-              <div className="relative w-full md:w-64">
-                <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                <input
-                  type="text"
-                  placeholder="Search step, role, or action..."
-                  value={searchQuery}
-                  onChange={e => setSearchQuery(e.target.value)}
-                  className="w-full pl-8 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-800 placeholder:text-slate-400 focus:outline-none focus:bg-white focus:border-[#FF5C28] transition-colors"
-                />
-                {searchQuery && (
-                  <button
-                    onClick={() => setSearchQuery("")}
-                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
-                  >
-                    <X className="w-3 h-3" />
-                  </button>
-                )}
+              {/* Inspector Quick Toggle */}
+              <div className="flex items-center gap-2 shrink-0">
+                <button
+                  onClick={() => setIsInspectorOpen(prev => !prev)}
+                  className="text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-lg transition-colors cursor-pointer border border-slate-200"
+                >
+                  {isInspectorOpen ? "Hide Step Inspector" : "Open Step Inspector"}
+                </button>
               </div>
             </div>
 
-            {/* Live Simulation Banner / Story Capsule */}
+            {/* Deep-dive Live Simulation Banner / Story Capsule */}
             <div className="mt-2.5 bg-gradient-to-r from-[#042C51] via-[#09477e] to-[#042C51] rounded-xl p-2.5 text-white flex flex-col md:flex-row md:items-center justify-between gap-2 shadow-sm border border-blue-400/20">
               <div className="flex items-center gap-2.5">
                 <div className="w-6 h-6 rounded-full bg-[#FF5C28] text-white flex items-center justify-center text-xs font-black shrink-0 animate-pulse">
@@ -1197,6 +1334,238 @@ export default function RecruitmentFlowchart({ onSwitchModule, onClose }: Recrui
                 </pre>
               </div>
             )}
+
+            {/* ==================== SECTION 1 STARTING PROCESS: ACCOUNT ACCESS LEVEL & IDENTITY GOVERNANCE ==================== */}
+            <div className="bg-white rounded-2xl border border-indigo-200/90 p-5 shadow-sm relative overflow-hidden space-y-3">
+              {/* Lane Header */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-indigo-100">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-indigo-700 to-indigo-900 text-white flex items-center justify-center shadow-xs">
+                    <Key className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] font-black uppercase tracking-wider bg-indigo-100 text-indigo-800 px-2 py-0.5 rounded">
+                        STARTING PROCESS
+                      </span>
+                      <h3 className="text-sm font-black text-slate-900 tracking-tight">
+                        Account Access Level & Identity Governance Flow
+                      </h3>
+                    </div>
+                    <p className="text-[11px] text-slate-500 font-medium mt-0.5">
+                      Authentication gate, Single Sign-On (SSO) & Role-Based Access Control (RBAC) levels governing module permissions.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Mode Switcher & Legend */}
+                <div className="flex flex-wrap items-center gap-2">
+                  <div className="flex items-center gap-1 bg-indigo-50 p-0.5 rounded-lg border border-indigo-200">
+                    <button
+                      type="button"
+                      onClick={() => setAccessFlowMode("branching")}
+                      className={`px-2.5 py-1 rounded text-[9.5px] font-black transition-all cursor-pointer flex items-center gap-1 ${
+                        accessFlowMode === "branching"
+                          ? "bg-[#4338CA] text-white shadow-2xs"
+                          : "text-slate-600 hover:text-slate-900"
+                      }`}
+                    >
+                      <GitFork className="w-3 h-3" />
+                      <span>RBAC Role Branching</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setAccessFlowMode("governance")}
+                      className={`px-2.5 py-1 rounded text-[9.5px] font-black transition-all cursor-pointer flex items-center gap-1 ${
+                        accessFlowMode === "governance"
+                          ? "bg-[#4338CA] text-white shadow-2xs"
+                          : "text-slate-600 hover:text-slate-900"
+                      }`}
+                    >
+                      <ArrowRight className="w-3 h-3" />
+                      <span>Governance Sequence</span>
+                    </button>
+                  </div>
+                  <span className="text-[9px] font-bold text-slate-500 flex items-center gap-1">
+                    <span className="w-2.5 h-2.5 rounded-full bg-[#4338CA]"></span>
+                    Primary Gate
+                  </span>
+                  <span className="text-[9px] font-bold text-purple-700 bg-purple-50 px-2 py-0.5 rounded border border-purple-200">
+                    4 Role Tiers
+                  </span>
+                </div>
+              </div>
+
+              {/* Horizontal Pipeline Track with perfectly aligned flex cards and centered arrows */}
+              <div className="flex items-stretch gap-1 sm:gap-2 overflow-x-auto pb-4 pt-1 select-none scrollbar-thin">
+                {/* START Pill Indicator */}
+                <div className="self-center flex flex-col items-center shrink-0 pr-1">
+                  <div className="px-3 py-1.5 bg-emerald-600 text-white rounded-full font-black text-[11px] uppercase tracking-widest shadow-md flex items-center gap-1.5 ring-2 ring-emerald-300">
+                    <span className="w-2 h-2 rounded-full bg-white animate-ping"></span>
+                    START
+                  </div>
+                  <span className="text-[8px] font-black uppercase text-emerald-700 mt-1 tracking-wider">
+                    IDENTITY GATE
+                  </span>
+                </div>
+
+                {renderFlowArrow("start", "acc-auth", "SSO Login", "indigo", "Authenticate")}
+
+                {/* Step 1: Authentication Gateway */}
+                <div className="flex-1 min-w-[210px] max-w-[240px]">
+                  {renderAccessStepCard(ACCESS_CONTROL_NODES[0])}
+                </div>
+
+                {accessFlowMode === "branching" ? (
+                  <>
+                    {renderFlowArrow("acc-auth", "rbac-matrix", "Verify Claims", "indigo", "Token Dispatch")}
+
+                    {/* RBAC Role-Based Access Matrix Dispatcher Node */}
+                    <div 
+                      onClick={() => { setSelectedAccessNodeId("acc-auth"); setIsInspectorOpen(true); }}
+                      className="shrink-0 w-[195px] bg-gradient-to-b from-indigo-900 to-slate-900 text-white rounded-2xl p-3 flex flex-col justify-between border border-indigo-700 shadow-sm cursor-pointer group hover:border-indigo-500 transition-all"
+                    >
+                      <div>
+                        <div className="flex items-center justify-between pb-2 mb-2 border-b border-indigo-800/80">
+                          <div className="flex items-center gap-1.5">
+                            <Key className="w-3.5 h-3.5 text-amber-400" />
+                            <span className="text-[10px] font-black uppercase tracking-wider text-amber-300">
+                              RBAC Router
+                            </span>
+                          </div>
+                          <span className="text-[8px] font-mono px-1.5 py-0.5 rounded bg-amber-400/20 text-amber-300 font-bold">
+                            OAuth 2.0
+                          </span>
+                        </div>
+                        <p className="text-[9.5px] text-indigo-200 leading-snug mb-2.5 font-medium">
+                          Validates JWT signature & decrypted role claims, dispatching the session into 4 authorized workspace tiers:
+                        </p>
+                        
+                        <div className="space-y-1.5">
+                          <div 
+                            onClick={(e) => { e.stopPropagation(); setSelectedAccessNodeId("acc-super-admin"); setIsInspectorOpen(true); }}
+                            className="flex items-center justify-between p-1.5 rounded-lg bg-purple-950/70 border border-purple-500/40 hover:bg-purple-900/80 transition-colors"
+                          >
+                            <span className="text-[8.5px] font-black text-purple-200">🟣 Tier 4: Super Admin</span>
+                            <span className="text-[7.5px] text-purple-300 font-bold">Executive</span>
+                          </div>
+                          <div 
+                            onClick={(e) => { e.stopPropagation(); setSelectedAccessNodeId("acc-ops-manager"); setIsInspectorOpen(true); }}
+                            className="flex items-center justify-between p-1.5 rounded-lg bg-blue-950/70 border border-blue-500/40 hover:bg-blue-900/80 transition-colors"
+                          >
+                            <span className="text-[8.5px] font-black text-blue-200">🔵 Tier 3: Ops Manager</span>
+                            <span className="text-[7.5px] text-blue-300 font-bold">Headcount</span>
+                          </div>
+                          <div 
+                            onClick={(e) => { e.stopPropagation(); setSelectedAccessNodeId("acc-ta-recruiter"); setIsInspectorOpen(true); }}
+                            className="flex items-center justify-between p-1.5 rounded-lg bg-orange-950/70 border border-orange-500/40 hover:bg-orange-900/80 transition-colors"
+                          >
+                            <span className="text-[8.5px] font-black text-orange-200">🟠 Tier 2: HR & TA</span>
+                            <span className="text-[7.5px] text-orange-300 font-bold">Sourcing</span>
+                          </div>
+                          <div 
+                            onClick={(e) => { e.stopPropagation(); setSelectedAccessNodeId("acc-employee"); setIsInspectorOpen(true); }}
+                            className="flex items-center justify-between p-1.5 rounded-lg bg-teal-950/70 border border-teal-500/40 hover:bg-teal-900/80 transition-colors"
+                          >
+                            <span className="text-[8.5px] font-black text-teal-200">🟢 Tier 1: Core Staff</span>
+                            <span className="text-[7.5px] text-teal-300 font-bold">201 DTR</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="pt-2 border-t border-indigo-800/80 text-[8.5px] text-indigo-300 flex items-center justify-between">
+                        <span className="font-bold">Zero Trust Handshake</span>
+                        <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+                      </div>
+                    </div>
+
+                    {renderFlowArrow("rbac-matrix", "acc-super-admin", "Tier 4", "purple", "Full Authority")}
+
+                    {/* Step 2: Super Admin */}
+                    <div className="flex-1 min-w-[210px] max-w-[240px]">
+                      {renderAccessStepCard(ACCESS_CONTROL_NODES[1])}
+                    </div>
+
+                    {renderFlowArrow("rbac-matrix", "acc-ops-manager", "Tier 3", "blue", "Operations Scope")}
+
+                    {/* Step 3: Operations Manager */}
+                    <div className="flex-1 min-w-[210px] max-w-[240px]">
+                      {renderAccessStepCard(ACCESS_CONTROL_NODES[2])}
+                    </div>
+
+                    {renderFlowArrow("rbac-matrix", "acc-ta-recruiter", "Tier 2", "orange", "Sourcing Scope")}
+
+                    {/* Step 4: HR & TA */}
+                    <div className="flex-1 min-w-[210px] max-w-[240px]">
+                      {renderAccessStepCard(ACCESS_CONTROL_NODES[3])}
+                    </div>
+
+                    {renderFlowArrow("rbac-matrix", "acc-employee", "Tier 1", "teal", "Self-Service")}
+
+                    {/* Step 5: Employee */}
+                    <div className="flex-1 min-w-[210px] max-w-[240px]">
+                      {renderAccessStepCard(ACCESS_CONTROL_NODES[4])}
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    {renderFlowArrow("acc-auth", "acc-super-admin", "Tier 4 Access", "purple", "Executive")}
+
+                    {/* Step 2: Super Admin */}
+                    <div className="flex-1 min-w-[210px] max-w-[240px]">
+                      {renderAccessStepCard(ACCESS_CONTROL_NODES[1])}
+                    </div>
+
+                    {renderFlowArrow("acc-super-admin", "acc-ops-manager", "Delegation", "blue", "Ops Governance")}
+
+                    {/* Step 3: Operations Manager */}
+                    <div className="flex-1 min-w-[210px] max-w-[240px]">
+                      {renderAccessStepCard(ACCESS_CONTROL_NODES[2])}
+                    </div>
+
+                    {renderFlowArrow("acc-ops-manager", "acc-ta-recruiter", "Requisition", "orange", "Hiring Quotas")}
+
+                    {/* Step 4: HR & TA */}
+                    <div className="flex-1 min-w-[210px] max-w-[240px]">
+                      {renderAccessStepCard(ACCESS_CONTROL_NODES[3])}
+                    </div>
+
+                    {renderFlowArrow("acc-ta-recruiter", "acc-employee", "Self-Service", "teal", "201 Portal")}
+
+                    {/* Step 5: Employee */}
+                    <div className="flex-1 min-w-[210px] max-w-[240px]">
+                      {renderAccessStepCard(ACCESS_CONTROL_NODES[4])}
+                    </div>
+                  </>
+                )}
+              </div>
+
+              {/* Inter-Section Transition Gateway Box to Recruitment Pipeline */}
+              <div className="pt-2 border-t border-dashed border-indigo-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-gradient-to-r from-indigo-50/90 via-purple-50/80 to-orange-50/90 p-3.5 rounded-xl border border-indigo-200">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-7 h-7 rounded-lg bg-indigo-600 text-white flex items-center justify-center shrink-0 shadow-xs">
+                    <GitFork className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[10px] font-black uppercase tracking-wider text-indigo-700 bg-indigo-100 px-1.5 py-0.5 rounded">
+                        ROLE CLEARANCE & PIPELINE HANDSHAKE
+                      </span>
+                      <span className="text-xs font-black text-slate-800">
+                        RBAC Handshake Complete ➔ Delegates to Recruitment Pipeline
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-slate-600 font-medium mt-0.5">
+                      <strong className="text-orange-700 font-bold">HR & TA Specialists (Role Tier 2)</strong> and <strong className="text-blue-700 font-bold">Operations Managers (Role Tier 3)</strong> hold authorized permissions to execute the 16-step recruitment lifecycle below.
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-1.5 text-[10px] font-black shrink-0 text-[#FF5C28] bg-white px-3 py-1.5 rounded-lg border border-orange-200 shadow-2xs">
+                  <span>Proceed to Step 1: Headcount & RAMPS Requisition</span>
+                  <ArrowDown className="w-3.5 h-3.5 text-[#FF5C28] animate-bounce" />
+                </div>
+              </div>
+            </div>
             
             {/* ==================== 4 PROCESS CHEVRONS (MATCHING IMAGE 1) ==================== */}
             <div className="grid grid-cols-4 gap-2 text-center select-none font-black text-xs">
@@ -1241,11 +1610,11 @@ export default function RecruitmentFlowchart({ onSwitchModule, onClose }: Recrui
               </div>
             </div>
 
-            {/* ==================== ROW 1: STEPS 1 TO 5 ==================== */}
+            {/* ==================== ROW 1: STEPS 1 TO 5 (REQUISITION FLOW & SPLIT PROCESS) ==================== */}
             {(phaseFilter === "all" || phaseFilter === 1 || phaseFilter === 2) && (
-              <div className="relative bg-white/80 border border-slate-200/90 rounded-2xl p-5 shadow-sm backdrop-blur-sm">
-                {/* Row Header Label */}
-                <div className="flex items-center justify-between mb-3 pb-2 border-b border-slate-100">
+              <div className="relative bg-white/80 border border-slate-200/90 rounded-2xl p-5 shadow-sm backdrop-blur-sm space-y-4">
+                {/* Row Header Label & Process Split Switcher */}
+                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 pb-3 border-b border-slate-100">
                   <div className="flex items-center gap-2">
                     <span className="px-2.5 py-0.5 rounded-md bg-[#1D68BD] text-white text-[10px] font-black uppercase tracking-wider">
                       PHASE 1 & 2 PIPELINE
@@ -1254,6 +1623,50 @@ export default function RecruitmentFlowchart({ onSwitchModule, onClose }: Recrui
                       Requisition Approval & Job Preparation Flow
                     </span>
                   </div>
+
+                  {/* Split Process Selector */}
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-black uppercase text-slate-400">Process Split:</span>
+                    <div className="flex items-center bg-slate-100 p-0.5 rounded-lg border border-slate-200">
+                      <button
+                        type="button"
+                        onClick={() => setHiringSplitMode("requisition")}
+                        className={`px-2.5 py-1 rounded-md text-[10px] font-black transition-all cursor-pointer flex items-center gap-1.5 ${
+                          hiringSplitMode === "requisition"
+                            ? "bg-[#1D68BD] text-white shadow-2xs"
+                            : "text-slate-600 hover:text-slate-900"
+                        }`}
+                      >
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                        <span>Requisition Track (Focus)</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setHiringSplitMode("downsizing")}
+                        className={`px-2.5 py-1 rounded-md text-[10px] font-black transition-all cursor-pointer flex items-center gap-1.5 ${
+                          hiringSplitMode === "downsizing"
+                            ? "bg-rose-700 text-white shadow-2xs"
+                            : "text-slate-600 hover:text-slate-900"
+                        }`}
+                      >
+                        <TrendingDown className="w-3 h-3 text-rose-300" />
+                        <span>Downsizing Track</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setHiringSplitMode("both")}
+                        className={`px-2.5 py-1 rounded-md text-[10px] font-black transition-all cursor-pointer flex items-center gap-1.5 ${
+                          hiringSplitMode === "both"
+                            ? "bg-[#042C51] text-white shadow-2xs"
+                            : "text-slate-600 hover:text-slate-900"
+                        }`}
+                      >
+                        <GitFork className="w-3 h-3 text-amber-300" />
+                        <span>Split Architecture</span>
+                      </button>
+                    </div>
+                  </div>
+
                   <div className="flex items-center gap-2 text-[10px] font-bold text-slate-500">
                     <span className="flex items-center gap-1 text-emerald-700">
                       <span className="w-2 h-2 rounded-full bg-emerald-500"></span> Primary Flow (Steps 1–5)
@@ -1266,23 +1679,23 @@ export default function RecruitmentFlowchart({ onSwitchModule, onClose }: Recrui
                   </div>
                 </div>
 
-                {/* Primary Horizontal Flow Pipeline */}
-                <div className="flex items-start gap-1 sm:gap-2 overflow-x-auto pb-2">
+                {/* Primary Horizontal Flow Pipeline: Focus on Requisition Process */}
+                <div className="flex items-stretch gap-1 sm:gap-2 overflow-x-auto pb-2">
                   {/* START Green Pill Indicator */}
-                  <div className="pt-3 flex flex-col items-center shrink-0">
+                  <div className="self-center flex flex-col items-center shrink-0 pr-1">
                     <div className="px-3 py-1.5 bg-emerald-600 text-white rounded-full font-black text-[11px] uppercase tracking-widest shadow-md flex items-center gap-1.5 ring-2 ring-emerald-300">
                       <span className="w-2 h-2 rounded-full bg-white animate-ping"></span>
                       START
                     </div>
                     <span className="text-[8px] font-black uppercase text-emerald-700 mt-1 tracking-wider">
-                      Hiring Need
+                      HIRING NEED
                     </span>
                   </div>
 
                   {/* START to Step 1 Arrow */}
                   {renderFlowArrow(0, 1, "Start", "emerald", "Initiate")}
 
-                  {/* STEP 1: Hiring Need */}
+                  {/* STEP 1: Hiring Need (Requisition Focus) */}
                   <div className="flex-1 min-w-[180px] max-w-[215px]">
                     {renderStepCard(FLOW_STEPS[0])}
                   </div>
@@ -1332,6 +1745,179 @@ export default function RecruitmentFlowchart({ onSwitchModule, onClose }: Recrui
                     </div>
                   </div>
                 </div>
+
+                {/* ==================== SPLIT PROCESS: REQUISITION VS DOWNSIZING BRANCH ==================== */}
+                {(hiringSplitMode === "both" || hiringSplitMode === "downsizing") ? (
+                  <div className="mt-4 pt-3 border-t-2 border-dashed border-rose-200 bg-rose-50/40 rounded-xl p-3.5 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="px-2 py-0.5 rounded bg-rose-700 text-white text-[9.5px] font-black uppercase tracking-wider">
+                          SPLIT BRANCH: DOWNSIZING PROCESS (- QUOTA)
+                        </span>
+                        <span className="text-[11px] text-rose-900 font-bold">
+                          Secondary Hiring Needs Process: Workforce Downsizing & Redeployment
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setHiringSplitMode("requisition")}
+                        className="text-[10px] font-bold text-rose-700 hover:text-rose-900 underline cursor-pointer"
+                      >
+                        Return to Requisition Focus
+                      </button>
+                    </div>
+
+                    {/* Downsizing Flow Branch */}
+                    <div className="flex items-start gap-2 overflow-x-auto pb-1">
+                      {/* Fork Connector From Hiring Need */}
+                      <div className="pt-3 flex flex-col items-center shrink-0">
+                        <div className="px-2.5 py-1 bg-rose-700 text-white rounded-lg font-black text-[10px] uppercase tracking-wider flex items-center gap-1 shadow-2xs">
+                          <GitFork className="w-3 h-3" />
+                          <span>FORK</span>
+                        </div>
+                        <span className="text-[7.5px] font-bold uppercase text-rose-700 mt-0.5">
+                          Request Type
+                        </span>
+                      </div>
+
+                      {/* Downsizing Branch Arrow */}
+                      <div className="flex flex-col items-center justify-center shrink-0 relative py-1 px-2">
+                        <div className="px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-wider bg-rose-100 text-rose-700 border border-rose-300">
+                          Downsize (- Quota)
+                        </div>
+                        <div className="w-16 h-5 flex items-center justify-center">
+                          <div className="h-0.5 w-full bg-rose-400"></div>
+                          <ChevronRight className="w-4 h-4 text-rose-600 -ml-1.5" />
+                        </div>
+                        <span className="text-[7.5px] font-bold text-slate-400 uppercase">
+                          Downramp Intent
+                        </span>
+                      </div>
+
+                      {/* Downsize Step Card 1 */}
+                      <div className="flex-1 min-w-[200px] max-w-[225px] rounded-2xl border border-rose-200 bg-white overflow-hidden shadow-sm">
+                        <div className="px-3 py-2 bg-rose-700 text-white flex items-center justify-between">
+                          <div className="flex items-center gap-1.5">
+                            <TrendingDown className="w-3.5 h-3.5 text-rose-200" />
+                            <h4 className="text-[11px] font-black truncate">1. Downsize Intake</h4>
+                          </div>
+                          <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-black/20">
+                            #1-B
+                          </span>
+                        </div>
+                        <div className="p-3 space-y-2 text-[10px]">
+                          <div className="text-[10px] font-black text-rose-900 uppercase tracking-wider border-b border-rose-100 pb-1">
+                            CAPACITY REDUCTION
+                          </div>
+                          <ul className="space-y-1 text-slate-600 font-medium">
+                            <li className="flex items-start gap-1"><span>•</span><span>Account & Campaign Sunset</span></li>
+                            <li className="flex items-start gap-1"><span>•</span><span>Position & Quota Reduction</span></li>
+                            <li className="flex items-start gap-1"><span>•</span><span>Reason (Client Offramp/Automation)</span></li>
+                            <li className="flex items-start gap-1"><span>•</span><span>Redeployment Matrix Roster</span></li>
+                            <li className="flex items-start gap-1"><span>•</span><span>Target Effective Release Date</span></li>
+                          </ul>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSelectedStepId(1);
+                              setIsRequisitionModalOpen(true);
+                            }}
+                            className="w-full py-1.5 px-2 rounded-lg text-[10px] font-black bg-rose-700 hover:bg-rose-800 text-white transition-all shadow-2xs cursor-pointer"
+                          >
+                            Submit Downsize Request
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Arrow between Downsize Step 1 and Step 2 */}
+                      <div className="flex flex-col items-center justify-center shrink-0 relative py-1 px-2">
+                        <div className="px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-wider bg-rose-700 text-white border border-rose-800">
+                          SUBMIT
+                        </div>
+                        <div className="w-16 h-5 flex items-center justify-center">
+                          <div className="h-0.5 w-full bg-rose-500"></div>
+                          <ChevronRight className="w-4 h-4 text-rose-700 -ml-1.5" />
+                        </div>
+                        <span className="text-[7.5px] font-bold text-slate-400 uppercase">
+                          WFM & OM Review
+                        </span>
+                      </div>
+
+                      {/* Downsize Step Card 2 */}
+                      <div className="flex-1 min-w-[200px] max-w-[225px] rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-sm">
+                        <div className="px-3 py-2 bg-slate-800 text-white flex items-center justify-between">
+                          <div className="flex items-center gap-1.5">
+                            <CheckSquare className="w-3.5 h-3.5 text-slate-300" />
+                            <h4 className="text-[11px] font-black truncate">2. Downsize Audit & Approval</h4>
+                          </div>
+                          <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-black/20">
+                            #2-B
+                          </span>
+                        </div>
+                        <div className="p-3 space-y-2 text-[10px]">
+                          <div className="text-[10px] font-black text-slate-700 uppercase tracking-wider border-b border-slate-100 pb-1">
+                            HEADCOUNT DECREMENT
+                          </div>
+                          <ul className="space-y-1 text-slate-600 font-medium">
+                            <li className="flex items-start gap-1"><span>•</span><span>OM & SOM Quota Validation</span></li>
+                            <li className="flex items-start gap-1"><span>•</span><span>Internal Redeployment Matching</span></li>
+                            <li className="flex items-start gap-1"><span>•</span><span>Voluntary Resignation Audit</span></li>
+                            <li className="flex items-start gap-1"><span>•</span><span>WFM Capacity Roster Decrement</span></li>
+                          </ul>
+                          <div className="p-1.5 bg-slate-50 rounded-lg border border-slate-200 text-[9.5px] text-slate-500 font-medium italic">
+                            Downsizing track connects to redeployment & roster adjustments.
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Information Callout: Focus on Requisition for now */}
+                      <div className="flex-1 min-w-[220px] max-w-[260px] p-3 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 text-xs flex flex-col justify-between">
+                        <div>
+                          <div className="flex items-center gap-1.5 font-black text-amber-800 mb-1">
+                            <Sparkles className="w-4 h-4 text-amber-600" />
+                            <span>Primary Focus: Requisition</span>
+                          </div>
+                          <p className="text-[11px] text-amber-800/90 leading-relaxed font-medium">
+                            Per instructions, the current active workflow focus is strictly on the <strong>Requisition (+ Headcount)</strong> process. The Downsizing process is mapped as a secondary split branch.
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setHiringSplitMode("requisition")}
+                          className="mt-2 py-1.5 px-2.5 bg-[#1D68BD] hover:bg-[#155296] text-white text-[10px] font-black rounded-lg transition-all shadow-xs cursor-pointer text-center"
+                        >
+                          Focus on Requisition Track
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  /* Sleek Inline Split Process Indicator when in Requisition Focus Mode */
+                  <div className="mt-2 py-2 px-3 bg-slate-50 border border-slate-200/80 rounded-xl flex items-center justify-between text-xs">
+                    <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1 font-black text-slate-700 text-[11px]">
+                        <GitFork className="w-3.5 h-3.5 text-[#1D68BD]" />
+                        <span>Hiring Needs Intake Split:</span>
+                      </div>
+                      <span className="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 text-[9.5px] font-black">
+                        🟢 Requisition (+ Headcount) [ACTIVE FOCUS - Steps 1–5]
+                      </span>
+                      <span className="text-slate-400 font-bold">|</span>
+                      <span className="px-2 py-0.5 rounded bg-rose-50 text-rose-700 text-[9.5px] font-bold border border-rose-200">
+                        🔻 Downsizing (- Quota) [Split Branch]
+                      </span>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => setHiringSplitMode("both")}
+                      className="px-2.5 py-1 text-[10.5px] font-black text-[#1D68BD] hover:text-[#042C51] bg-white hover:bg-blue-50 border border-blue-200 rounded-lg shadow-2xs transition-all flex items-center gap-1 cursor-pointer"
+                    >
+                      <GitFork className="w-3 h-3" />
+                      <span>Expand Split Process View</span>
+                    </button>
+                  </div>
+                )}
 
                 {/* Rejection Loopbacks for Row 1 */}
                 {showRejectionLoops && (
@@ -1433,7 +2019,7 @@ export default function RecruitmentFlowchart({ onSwitchModule, onClose }: Recrui
                 </div>
 
                 {/* Primary Horizontal Flow Pipeline */}
-                <div className="flex items-start gap-1 sm:gap-2 overflow-x-auto pb-2">
+                <div className="flex items-stretch gap-1 sm:gap-2 overflow-x-auto pb-2">
                   {/* STEP 6: Candidate Application */}
                   <div className="flex-1 min-w-[170px] max-w-[205px]">
                     {renderStepCard(FLOW_STEPS[5])}
@@ -1591,7 +2177,7 @@ export default function RecruitmentFlowchart({ onSwitchModule, onClose }: Recrui
                 </div>
 
                 {/* Primary Horizontal Flow Pipeline */}
-                <div className="flex items-start gap-1 sm:gap-2 overflow-x-auto pb-2">
+                <div className="flex items-stretch gap-1 sm:gap-2 overflow-x-auto pb-2">
                   {/* STEP 12: Requirements / Documents */}
                   <div className="flex-1 min-w-[170px] max-w-[205px]">
                     {renderStepCard(FLOW_STEPS[11])}
@@ -1751,165 +2337,326 @@ export default function RecruitmentFlowchart({ onSwitchModule, onClose }: Recrui
               exit={{ opacity: 0, x: 50 }}
               className="w-full lg:w-96 bg-white border-l border-slate-200 shadow-xl flex flex-col h-full z-20 shrink-0"
             >
-              {/* Drawer Header */}
-              <div className="p-4 border-b border-slate-200 flex items-center justify-between bg-slate-50">
-                <div className="flex items-center gap-2">
-                  <div className={`w-7 h-7 rounded-lg flex items-center justify-center font-black text-xs ${selectedStep.headerColor}`}>
-                    {selectedStep.id}
-                  </div>
-                  <div>
-                    <h3 className="text-xs font-black text-[#042C51] leading-tight">
-                      Step {selectedStep.id} Inspector
-                    </h3>
-                    <p className="text-[10px] text-slate-400 uppercase tracking-wider font-bold">
-                      {selectedStep.category} Phase
-                    </p>
-                  </div>
-                </div>
-
-                <button
-                  onClick={() => setIsInspectorOpen(false)}
-                  className="p-1.5 text-slate-400 hover:text-slate-700 rounded-md hover:bg-slate-200 transition-colors cursor-pointer"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-
-              {/* Drawer Body */}
-              <div className="flex-1 overflow-y-auto p-4 space-y-4 text-xs">
-                {/* Step Full Title */}
-                <div>
-                  <h4 className="text-sm font-black text-[#042C51]">
-                    {selectedStep.title}
-                  </h4>
-                  <p className="text-xs text-slate-500 font-medium mt-0.5">
-                    {selectedStep.description}
-                  </p>
-                </div>
-
-                {/* Direct Action: Jump to Live SiBS Module */}
-                {selectedStep.linkedModule && onSwitchModule && (
-                  <div className="bg-orange-50 border border-orange-200 rounded-xl p-3 space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span className="text-[10px] font-black uppercase text-[#FF5C28] tracking-wider">
-                        CONNECTED WORKING MODULE
-                      </span>
-                      <Sparkles className="w-3.5 h-3.5 text-[#FF5C28]" />
+              {activeAccessNode ? (
+                /* Access Control Node Inspector */
+                <>
+                  {/* Drawer Header */}
+                  <div className="p-4 border-b border-indigo-100 flex items-center justify-between bg-indigo-50/70">
+                    <div className="flex items-center gap-2">
+                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center font-black text-xs text-white ${activeAccessNode.badgeColor}`}>
+                        {activeAccessNode.code}
+                      </div>
+                      <div>
+                        <h3 className="text-xs font-black text-slate-900 leading-tight">
+                          {activeAccessNode.title}
+                        </h3>
+                        <p className="text-[10px] text-indigo-700 uppercase tracking-wider font-bold">
+                          Identity Governance & RBAC Tier
+                        </p>
+                      </div>
                     </div>
-                    <p className="text-[11px] text-slate-700 font-medium">
-                      This stage directly powers the <span className="font-bold text-[#042C51]">{selectedStep.linkedModule}</span> screen in the SiBS platform.
-                    </p>
+
                     <button
-                      onClick={() => onSwitchModule(selectedStep.linkedModule!)}
-                      className="w-full py-2 px-3 bg-[#FF5C28] hover:bg-[#e04b1c] text-white font-bold rounded-lg transition-all shadow-xs flex items-center justify-center gap-1.5 cursor-pointer"
+                      onClick={() => setIsInspectorOpen(false)}
+                      className="p-1.5 text-slate-400 hover:text-slate-700 rounded-md hover:bg-slate-200 transition-colors cursor-pointer"
                     >
-                      <ExternalLink className="w-3.5 h-3.5" />
-                      <span>Open {selectedStep.linkedModule}</span>
+                      <X className="w-4 h-4" />
                     </button>
                   </div>
-                )}
 
-                {/* Governance Details: Owner & SLA */}
-                <div className="grid grid-cols-2 gap-2 bg-slate-50 p-3 rounded-xl border border-slate-200">
-                  <div>
-                    <span className="text-[9px] font-black uppercase text-slate-400">Role Owner</span>
-                    <p className="text-[11px] font-bold text-slate-800 mt-0.5">{selectedStep.roleOwner}</p>
-                  </div>
-                  <div>
-                    <span className="text-[9px] font-black uppercase text-slate-400">Expected SLA</span>
-                    <p className="text-[11px] font-bold text-emerald-700 mt-0.5">{selectedStep.slaDays}</p>
-                  </div>
-                </div>
+                  {/* Drawer Body */}
+                  <div className="flex-1 overflow-y-auto p-4 space-y-4 text-xs">
+                    <div>
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-[10px] font-black uppercase text-indigo-700 bg-indigo-100 px-2 py-0.5 rounded">
+                          {activeAccessNode.subtitle}
+                        </span>
+                        <span className="text-[9px] font-bold text-slate-400">
+                          {activeAccessNode.code}
+                        </span>
+                      </div>
+                      <h4 className="text-sm font-black text-slate-900">
+                        {activeAccessNode.title} Specifications
+                      </h4>
+                      <p className="text-xs text-slate-600 font-medium mt-1 leading-relaxed">
+                        {activeAccessNode.description}
+                      </p>
+                    </div>
 
-                {/* Interactive Status Simulation Toggle */}
-                {selectedStep.hasApprovalStatus && (
-                  <div className="space-y-1.5 bg-blue-50/50 p-3 rounded-xl border border-blue-200">
-                    <span className="text-[10px] font-black uppercase text-blue-900 tracking-wider">
-                      Simulate Approval Decision
-                    </span>
-                    <div className="grid grid-cols-2 gap-1.5 pt-1">
+                    {/* Authorized Roles */}
+                    <div className="space-y-1.5 bg-slate-50 p-3 rounded-xl border border-slate-200">
+                      <span className="text-[10px] font-black uppercase text-slate-400 tracking-wider">
+                        Authorized Role Scope & Personas
+                      </span>
+                      <div className="flex flex-wrap gap-1.5 pt-1">
+                        {activeAccessNode.roles.map((role, rIdx) => (
+                          <span
+                            key={rIdx}
+                            className="px-2 py-1 rounded-md text-[10px] font-bold bg-white text-indigo-900 border border-indigo-200 shadow-2xs"
+                          >
+                            {role}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Governance Bullets */}
+                    <div className="space-y-1.5">
+                      <span className="text-[10px] font-black uppercase text-slate-400 tracking-wider">
+                        Primary System Responsibilities
+                      </span>
+                      <div className="space-y-1">
+                        {activeAccessNode.bullets.map((bullet, bIdx) => (
+                          <div key={bIdx} className="flex items-start gap-2 p-2 rounded-lg bg-indigo-50/50 border border-indigo-100 text-[11px] text-slate-700">
+                            <ShieldCheck className="w-4 h-4 text-indigo-600 shrink-0 mt-0.5" />
+                            <span>{bullet}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Connected Working Module Launcher */}
+                    {activeAccessNode.module && onSwitchModule && (
+                      <div className="bg-indigo-50 border border-indigo-200 rounded-xl p-3 space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] font-black uppercase text-indigo-800 tracking-wider">
+                            CONNECTED WORKING MODULE
+                          </span>
+                          <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
+                        </div>
+                        <p className="text-[11px] text-slate-700 font-medium">
+                          Launch the corresponding SiBS functional workspace: <span className="font-bold text-indigo-900">{activeAccessNode.module}</span>
+                        </p>
+                        <button
+                          onClick={() => onSwitchModule(activeAccessNode.module!)}
+                          className="w-full py-2 px-3 bg-[#4338CA] hover:bg-indigo-700 text-white font-bold rounded-lg transition-all shadow-xs flex items-center justify-center gap-1.5 cursor-pointer"
+                        >
+                          <ExternalLink className="w-3.5 h-3.5" />
+                          <span>Open {activeAccessNode.module}</span>
+                        </button>
+                      </div>
+                    )}
+
+                    {/* Pipeline Jump Action */}
+                    <div className="pt-2 border-t border-slate-200">
                       <button
-                        onClick={() => handleUpdateStepState(selectedStep.id, "approved")}
-                        className={`py-1.5 px-2 rounded-lg font-bold text-[10.5px] transition-all cursor-pointer flex items-center justify-center gap-1 ${
-                          stepStates[selectedStep.id]?.status === "approved"
-                            ? "bg-emerald-600 text-white shadow-2xs"
-                            : "bg-white text-slate-700 border border-slate-200 hover:bg-slate-50"
-                        }`}
+                        onClick={() => {
+                          setSelectedAccessNodeId(null);
+                          setSelectedStepId(1);
+                        }}
+                        className="w-full py-2 px-3 bg-[#1D68BD] hover:bg-[#155296] text-white font-black rounded-lg transition-all shadow-xs flex items-center justify-center gap-1.5 cursor-pointer text-xs"
                       >
-                        <CheckCircle2 className="w-3.5 h-3.5" />
-                        <span>Approve</span>
-                      </button>
-                      <button
-                        onClick={() => handleUpdateStepState(selectedStep.id, "rejected")}
-                        className={`py-1.5 px-2 rounded-lg font-bold text-[10.5px] transition-all cursor-pointer flex items-center justify-center gap-1 ${
-                          stepStates[selectedStep.id]?.status === "rejected"
-                            ? "bg-red-600 text-white shadow-2xs"
-                            : "bg-white text-slate-700 border border-slate-200 hover:bg-slate-50"
-                        }`}
-                      >
-                        <XCircle className="w-3.5 h-3.5" />
-                        <span>Reject</span>
+                        <span>Jump to Step 1: Headcount Requisition</span>
+                        <ArrowRight className="w-3.5 h-3.5" />
                       </button>
                     </div>
                   </div>
-                )}
-
-                {/* Key Inputs Required */}
-                <div className="space-y-1.5">
-                  <span className="text-[10px] font-black uppercase text-slate-400 tracking-wider">
-                    Stage Inputs & Prerequisites
-                  </span>
-                  <div className="space-y-1">
-                    {selectedStep.inputs.map((inp, idx) => (
-                      <div key={idx} className="flex items-center gap-2 p-1.5 rounded-lg bg-slate-50 border border-slate-200/80 text-[11px] text-slate-700">
-                        <CheckSquare className="w-3.5 h-3.5 text-blue-600 shrink-0" />
-                        <span>{inp}</span>
+                </>
+              ) : (
+                /* Pipeline Step Inspector (Steps 1-16) */
+                <>
+                  {/* Drawer Header */}
+                  <div className="p-4 border-b border-slate-200 flex items-center justify-between bg-slate-50">
+                    <div className="flex items-center gap-2">
+                      <div className={`w-7 h-7 rounded-lg flex items-center justify-center font-black text-xs ${selectedStep.headerColor}`}>
+                        {selectedStep.id}
                       </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Key Outputs Generated */}
-                <div className="space-y-1.5">
-                  <span className="text-[10px] font-black uppercase text-slate-400 tracking-wider">
-                    Stage Deliverables & Artifacts
-                  </span>
-                  <div className="space-y-1">
-                    {selectedStep.outputs.map((out, idx) => (
-                      <div key={idx} className="flex items-center gap-2 p-1.5 rounded-lg bg-emerald-50/50 border border-emerald-200 text-[11px] text-emerald-800">
-                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                        <span>{out}</span>
+                      <div>
+                        <h3 className="text-xs font-black text-[#042C51] leading-tight">
+                          Step {selectedStep.id} Inspector
+                        </h3>
+                        <p className="text-[10px] text-slate-400 uppercase tracking-wider font-bold">
+                          {selectedStep.category} Phase
+                        </p>
                       </div>
-                    ))}
-                  </div>
-                </div>
+                    </div>
 
-                {/* Step Navigation Bar */}
-                <div className="pt-2 flex items-center justify-between border-t border-slate-200">
-                  <button
-                    disabled={selectedStep.id <= 1}
-                    onClick={() => setSelectedStepId(prev => Math.max(1, prev - 1))}
-                    className="px-3 py-1.5 rounded-lg border border-slate-200 text-slate-700 font-bold hover:bg-slate-100 disabled:opacity-40 cursor-pointer"
-                  >
-                    ← Previous Step
-                  </button>
-                  <span className="text-[11px] font-black text-slate-400">
-                    {selectedStep.id} of 16
-                  </span>
-                  <button
-                    disabled={selectedStep.id >= 16}
-                    onClick={() => setSelectedStepId(prev => Math.min(16, prev + 1))}
-                    className="px-3 py-1.5 rounded-lg bg-[#042C51] text-white font-bold hover:bg-[#063560] disabled:opacity-40 cursor-pointer"
-                  >
-                    Next Step →
-                  </button>
-                </div>
-              </div>
+                    <button
+                      onClick={() => setIsInspectorOpen(false)}
+                      className="p-1.5 text-slate-400 hover:text-slate-700 rounded-md hover:bg-slate-200 transition-colors cursor-pointer"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+
+                  {/* Drawer Body */}
+                  <div className="flex-1 overflow-y-auto p-4 space-y-4 text-xs">
+                    {/* Step Full Title */}
+                    <div>
+                      <h4 className="text-sm font-black text-[#042C51]">
+                        {selectedStep.title}
+                      </h4>
+                      <p className="text-xs text-slate-500 font-medium mt-0.5">
+                        {selectedStep.description}
+                      </p>
+                    </div>
+
+                    {/* Step 1 Specific: 1:1 Personnel Requisition Intake Launcher */}
+                    {selectedStep.id === 1 && (
+                      <div className="bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-3 space-y-2.5">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] font-black uppercase text-[#1D68BD] tracking-wider flex items-center gap-1">
+                            <Sparkles className="w-3 h-3 text-[#FF5C28]" />
+                            PERSONNEL REQUISITION FORM (IMAGE 2)
+                          </span>
+                          <span className="px-1.5 py-0.5 rounded text-[9px] font-extrabold bg-blue-600 text-white">
+                            1:1 Modal
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-slate-600 font-medium">
+                          Log a new headcount addition using the exact 3-section format: Request Type & Position, Personnel Requirement, and Request Ownership.
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => setIsRequisitionModalOpen(true)}
+                          className="w-full py-2 px-3 bg-[#1D68BD] hover:bg-[#155296] text-white font-black rounded-lg transition-all shadow-xs flex items-center justify-center gap-2 cursor-pointer text-xs"
+                        >
+                          <FileText className="w-3.5 h-3.5" />
+                          <span>Open Personnel Requisition Form</span>
+                        </button>
+                      </div>
+                    )}
+
+                    {/* Direct Action: Jump to Live SiBS Module */}
+                    {selectedStep.linkedModule && onSwitchModule && (
+                      <div className="bg-orange-50 border border-orange-200 rounded-xl p-3 space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] font-black uppercase text-[#FF5C28] tracking-wider">
+                            CONNECTED WORKING MODULE
+                          </span>
+                          <Sparkles className="w-3.5 h-3.5 text-[#FF5C28]" />
+                        </div>
+                        <p className="text-[11px] text-slate-700 font-medium">
+                          This stage directly powers the <span className="font-bold text-[#042C51]">{selectedStep.linkedModule}</span> screen in the SiBS platform.
+                        </p>
+                        <button
+                          onClick={() => onSwitchModule(selectedStep.linkedModule!)}
+                          className="w-full py-2 px-3 bg-[#FF5C28] hover:bg-[#e04b1c] text-white font-bold rounded-lg transition-all shadow-xs flex items-center justify-center gap-1.5 cursor-pointer"
+                        >
+                          <ExternalLink className="w-3.5 h-3.5" />
+                          <span>Open {selectedStep.linkedModule}</span>
+                        </button>
+                      </div>
+                    )}
+
+                    {/* Governance Details: Owner & SLA */}
+                    <div className="grid grid-cols-2 gap-2 bg-slate-50 p-3 rounded-xl border border-slate-200">
+                      <div>
+                        <span className="text-[9px] font-black uppercase text-slate-400">Role Owner</span>
+                        <p className="text-[11px] font-bold text-slate-800 mt-0.5">{selectedStep.roleOwner}</p>
+                      </div>
+                      <div>
+                        <span className="text-[9px] font-black uppercase text-slate-400">Expected SLA</span>
+                        <p className="text-[11px] font-bold text-emerald-700 mt-0.5">{selectedStep.slaDays}</p>
+                      </div>
+                    </div>
+
+                    {/* Interactive Status Simulation Toggle */}
+                    {selectedStep.hasApprovalStatus && (
+                      <div className="space-y-1.5 bg-blue-50/50 p-3 rounded-xl border border-blue-200">
+                        <span className="text-[10px] font-black uppercase text-blue-900 tracking-wider">
+                          Simulate Approval Decision
+                        </span>
+                        <div className="grid grid-cols-2 gap-1.5 pt-1">
+                          <button
+                            onClick={() => handleUpdateStepState(selectedStep.id, "approved")}
+                            className={`py-1.5 px-2 rounded-lg font-bold text-[10.5px] transition-all cursor-pointer flex items-center justify-center gap-1 ${
+                              stepStates[selectedStep.id]?.status === "approved"
+                                ? "bg-emerald-600 text-white shadow-2xs"
+                                : "bg-white text-slate-700 border border-slate-200 hover:bg-slate-50"
+                            }`}
+                          >
+                            <CheckCircle2 className="w-3.5 h-3.5" />
+                            <span>Approve</span>
+                          </button>
+                          <button
+                            onClick={() => handleUpdateStepState(selectedStep.id, "rejected")}
+                            className={`py-1.5 px-2 rounded-lg font-bold text-[10.5px] transition-all cursor-pointer flex items-center justify-center gap-1 ${
+                              stepStates[selectedStep.id]?.status === "rejected"
+                                ? "bg-red-600 text-white shadow-2xs"
+                                : "bg-white text-slate-700 border border-slate-200 hover:bg-slate-50"
+                            }`}
+                          >
+                            <XCircle className="w-3.5 h-3.5" />
+                            <span>Reject</span>
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Key Inputs Required */}
+                    <div className="space-y-1.5">
+                      <span className="text-[10px] font-black uppercase text-slate-400 tracking-wider">
+                        Stage Inputs & Prerequisites
+                      </span>
+                      <div className="space-y-1">
+                        {selectedStep.inputs.map((inp, idx) => (
+                          <div key={idx} className="flex items-center gap-2 p-1.5 rounded-lg bg-slate-50 border border-slate-200/80 text-[11px] text-slate-700">
+                            <CheckSquare className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+                            <span>{inp}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Key Outputs Generated */}
+                    <div className="space-y-1.5">
+                      <span className="text-[10px] font-black uppercase text-slate-400 tracking-wider">
+                        Stage Deliverables & Artifacts
+                      </span>
+                      <div className="space-y-1">
+                        {selectedStep.outputs.map((out, idx) => (
+                          <div key={idx} className="flex items-center gap-2 p-1.5 rounded-lg bg-emerald-50/50 border border-emerald-200 text-[11px] text-emerald-800">
+                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                            <span>{out}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Step Navigation Bar */}
+                    <div className="pt-2 flex items-center justify-between border-t border-slate-200">
+                      <button
+                        disabled={selectedStep.id <= 1}
+                        onClick={() => setSelectedStepId(prev => Math.max(1, prev - 1))}
+                        className="px-3 py-1.5 rounded-lg border border-slate-200 text-slate-700 font-bold hover:bg-slate-100 disabled:opacity-40 cursor-pointer"
+                      >
+                        ← Previous Step
+                      </button>
+                      <span className="text-[11px] font-black text-slate-400">
+                        {selectedStep.id} of 16
+                      </span>
+                      <button
+                        disabled={selectedStep.id >= 16}
+                        onClick={() => setSelectedStepId(prev => Math.min(16, prev + 1))}
+                        className="px-3 py-1.5 rounded-lg bg-[#042C51] text-white font-bold hover:bg-[#063560] disabled:opacity-40 cursor-pointer"
+                      >
+                        Next Step →
+                      </button>
+                    </div>
+                  </div>
+                </>
+              )}
             </motion.div>
           )}
         </AnimatePresence>
       </div>
       )}
+
+      {/* 1:1 PERSONNEL REQUISITION MODAL (Image 2) */}
+      <PersonnelRequisitionModal
+        isOpen={isRequisitionModalOpen}
+        onClose={() => setIsRequisitionModalOpen(false)}
+        onSubmitSuccess={(data: RequisitionFormData) => {
+          setStepStates(prev => ({
+            ...prev,
+            1: { status: "complete" },
+            2: { status: "pending" }
+          }));
+          setSelectedStepId(2);
+          setIsInspectorOpen(true);
+        }}
+      />
     </div>
   );
 
@@ -1923,15 +2670,16 @@ export default function RecruitmentFlowchart({ onSwitchModule, onClose }: Recrui
 
   // Render an Emphasized Flow Arrow Connector between two pipeline steps
   function renderFlowArrow(
-    sourceId: number,
-    targetId: number,
+    sourceId: number | string,
+    targetId: number | string,
     label: string,
-    color: "blue" | "teal" | "purple" | "orange" | "emerald" = "blue",
+    color: "blue" | "teal" | "purple" | "orange" | "emerald" | "indigo" | "slate" = "blue",
     sublabel?: string
   ) {
-    const isPassed = selectedStepId > sourceId;
-    const isCurrent = selectedStepId === sourceId;
-    const isActive = isPassed || isCurrent;
+    const isNumSource = typeof sourceId === "number";
+    const isPassed = isNumSource && selectedStepId > (sourceId as number);
+    const isCurrent = isNumSource && selectedStepId === (sourceId as number);
+    const isActive = isPassed || isCurrent || selectedAccessNodeId === sourceId || selectedAccessNodeId === targetId;
 
     const colorMap = {
       blue: {
@@ -1968,10 +2716,24 @@ export default function RecruitmentFlowchart({ onSwitchModule, onClose }: Recrui
         stroke: isActive ? "#059669" : "#64748B",
         glow: isActive ? "drop-shadow-[0_0_6px_rgba(5,150,105,0.5)]" : "",
         particle: "#6EE7B7"
+      },
+      indigo: {
+        border: isActive ? "border-[#4338CA]" : "border-slate-300",
+        badge: isActive ? "bg-[#4338CA] text-white border-indigo-700" : "bg-white text-slate-600 border-slate-300 font-bold",
+        stroke: isActive ? "#4338CA" : "#64748B",
+        glow: isActive ? "drop-shadow-[0_0_6px_rgba(67,56,202,0.5)]" : "",
+        particle: "#818CF8"
+      },
+      slate: {
+        border: "border-slate-300",
+        badge: "bg-white text-slate-600 border-slate-300 font-bold",
+        stroke: "#64748B",
+        glow: "",
+        particle: "#94A3B8"
       }
     };
 
-    const c = colorMap[color];
+    const c = colorMap[color] || colorMap.blue;
     const markerId = `flow-arrow-head-${sourceId}-${targetId}`;
 
     // Dynamically calculate width so the label badge and sublabel never overlap adjacent step cards
@@ -1983,17 +2745,24 @@ export default function RecruitmentFlowchart({ onSwitchModule, onClose }: Recrui
       <div
         key={`arrow-${sourceId}-${targetId}`}
         onClick={() => {
-          setSelectedStepId(targetId);
+          if (typeof targetId === "number") {
+            setSelectedStepId(targetId);
+            setSelectedAccessNodeId(null);
+          } else {
+            setSelectedAccessNodeId(targetId);
+          }
           setIsInspectorOpen(true);
         }}
         style={{ width: `${effectiveWidth}px`, minWidth: `${effectiveWidth}px` }}
-        className="flex flex-col items-center justify-center shrink-0 relative select-none py-1 group cursor-pointer px-1"
-        title={`Flow: Step ${sourceId} ➔ Step ${targetId} (${label})`}
+        className="self-center flex flex-col items-center justify-center shrink-0 relative select-none py-1 group cursor-pointer px-1 z-10"
+        title={`Flow: ${sourceId} ➔ ${targetId} (${label})`}
       >
         {/* Step Transition Label Badge */}
         <div
           className={`px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-wider whitespace-nowrap shadow-2xs border transition-all duration-300 z-10 ${
-            c.badge
+            (sourceId === 1 && targetId === 2)
+              ? "bg-[#1D68BD] text-white border-2 border-[#FF5C28] ring-2 ring-orange-300 shadow-xs"
+              : c.badge
           } ${isCurrent ? "scale-110 ring-2 ring-orange-400" : "group-hover:scale-105"}`}
         >
           {label}
@@ -2059,6 +2828,94 @@ export default function RecruitmentFlowchart({ onSwitchModule, onClose }: Recrui
     );
   }
 
+  // Render an Access Node Card matching the visual fidelity of the flowchart cards
+  function renderAccessStepCard(node: AccessNode) {
+    const isSelected = selectedAccessNodeId === node.id;
+    const IconComponent = node.icon;
+
+    return (
+      <div
+        key={node.id}
+        onClick={() => {
+          setSelectedAccessNodeId(node.id);
+          setIsInspectorOpen(true);
+        }}
+        className={`group relative rounded-2xl border transition-all duration-200 flex flex-col justify-between overflow-hidden cursor-pointer h-full ${
+          isSelected
+            ? "ring-3 ring-[#4338CA] shadow-xl scale-[1.02] z-10 border-[#4338CA] bg-white"
+            : "bg-white border-slate-200 hover:border-indigo-300 hover:shadow-md"
+        }`}
+      >
+        {/* Card Header */}
+        <div className={`px-3 py-2.5 flex items-center justify-between gap-1.5 ${node.badgeColor}`}>
+          <div className="flex items-center gap-1.5 min-w-0">
+            <div className="w-5 h-5 rounded-md bg-white/20 flex items-center justify-center shrink-0">
+              <IconComponent className="w-3.5 h-3.5 text-white" />
+            </div>
+            <h3 className="text-[11px] font-black tracking-tight truncate">
+              {node.title}
+            </h3>
+          </div>
+          <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-black/25 shrink-0">
+            {node.code}
+          </span>
+        </div>
+
+        {/* Card Body */}
+        <div className="p-3 flex-1 flex flex-col justify-between space-y-2.5">
+          <div>
+            <div className="text-[9.5px] font-black text-slate-700 uppercase tracking-wider mb-1.5 border-b border-slate-100 pb-1 flex items-center justify-between">
+              <span className="truncate">{node.subtitle}</span>
+            </div>
+
+            {/* Bullets */}
+            <ul className="space-y-1 text-[10px] text-slate-600 font-medium">
+              {node.bullets.map((bullet, bIdx) => (
+                <li key={bIdx} className="flex items-start gap-1 leading-tight">
+                  <span className="text-indigo-500 font-bold">•</span>
+                  <span>{bullet}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div className="space-y-2 pt-1 border-t border-slate-100">
+            {/* Roles badge */}
+            <div className="flex flex-wrap gap-1">
+              {node.roles.slice(0, 2).map((role, rIdx) => (
+                <span key={rIdx} className="text-[8.5px] font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-700">
+                  {role}
+                </span>
+              ))}
+              {node.roles.length > 2 && (
+                <span className="text-[8.5px] font-bold px-1 py-0.5 rounded bg-slate-100 text-slate-500">
+                  +{node.roles.length - 2}
+                </span>
+              )}
+            </div>
+
+            {/* Action button */}
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setSelectedAccessNodeId(node.id);
+                setIsInspectorOpen(true);
+              }}
+              className="w-full py-1.5 px-2 rounded-lg text-[10px] font-black bg-[#4338CA] hover:bg-indigo-700 text-white transition-all shadow-2xs cursor-pointer"
+            >
+              {node.btnLabel}
+            </button>
+          </div>
+        </div>
+
+        {isSelected && (
+          <div className="h-1 w-full bg-[#4338CA]"></div>
+        )}
+      </div>
+    );
+  }
+
   // Render a Single Step Card matching the visual fidelity of Image 1
   function renderStepCard(step: FlowStep) {
     const isSelected = selectedStepId === step.id;
@@ -2075,9 +2932,10 @@ export default function RecruitmentFlowchart({ onSwitchModule, onClose }: Recrui
         key={step.id}
         onClick={() => {
           setSelectedStepId(step.id);
+          setSelectedAccessNodeId(null);
           setIsInspectorOpen(true);
         }}
-        className={`group relative rounded-2xl border transition-all duration-200 flex flex-col justify-between overflow-hidden cursor-pointer ${
+        className={`group relative rounded-2xl border transition-all duration-200 flex flex-col justify-between overflow-hidden cursor-pointer h-full ${
           isSelected
             ? "ring-3 ring-[#FF5C28] shadow-xl scale-[1.02] z-10 border-[#FF5C28]"
             : isHighlighted

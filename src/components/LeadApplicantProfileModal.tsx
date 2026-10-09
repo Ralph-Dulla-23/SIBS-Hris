@@ -54,8 +54,6 @@ export default function LeadApplicantProfileModal({
   onSendApplicationLink,
   initialEditMode = false
 }: LeadApplicantProfileModalProps) {
-  if (!isOpen || !lead) return null;
-
   // Tabs: "overview" | "history"
   const [activeTab, setActiveTab] = useState<"overview" | "history">("overview");
 
@@ -63,20 +61,40 @@ export default function LeadApplicantProfileModal({
   const [isEditing, setIsEditing] = useState<boolean>(initialEditMode);
 
   // Form State for editing
-  const [formData, setFormData] = useState({
-    firstName: lead.firstName || lead.fullName.split(" ")[0] || "",
-    middleName: lead.middleName || "",
-    lastName: lead.lastName || lead.fullName.split(" ").slice(1).join(" ") || "",
-    suffix: lead.suffix || "",
-    cpNum: lead.cpNum,
-    email: lead.email,
-    department: lead.department,
-    specificAccount: lead.specificAccount || "CD - Collect",
-    source: lead.source,
-    preferredSite: lead.preferredSite,
-    status: lead.status,
-    notes: lead.notes,
-    referralCode: lead.referralCode || ""
+  const [formData, setFormData] = useState(() => {
+    if (!lead) {
+      return {
+        firstName: "",
+        middleName: "",
+        lastName: "",
+        suffix: "",
+        cpNum: "",
+        email: "",
+        department: "",
+        specificAccount: "CD - Collect",
+        source: "",
+        preferredSite: "",
+        status: "New Lead" as ApplicantLead["status"],
+        notes: "",
+        referralCode: ""
+      };
+    }
+    const names = lead.fullName.split(" ");
+    return {
+      firstName: lead.firstName || names[0] || "",
+      middleName: lead.middleName || "",
+      lastName: lead.lastName || names.slice(1).join(" ") || "",
+      suffix: lead.suffix || "",
+      cpNum: lead.cpNum,
+      email: lead.email,
+      department: lead.department,
+      specificAccount: lead.specificAccount || "CD - Collect",
+      source: lead.source,
+      preferredSite: lead.preferredSite,
+      status: lead.status,
+      notes: lead.notes,
+      referralCode: lead.referralCode || ""
+    };
   });
 
   // Sync state whenever lead or initialEditMode changes
@@ -101,7 +119,7 @@ export default function LeadApplicantProfileModal({
       setIsEditing(initialEditMode);
       setActiveTab("overview");
     }
-  }, [lead?.id, initialEditMode, isOpen]);
+  }, [lead, initialEditMode, isOpen]);
 
   // New History Note Composer state
   const [newNoteText, setNewNoteText] = useState("");
@@ -119,6 +137,7 @@ export default function LeadApplicantProfileModal({
 
   // Switch to edit mode with current lead values
   const handleStartEditing = () => {
+    if (!lead) return;
     const names = lead.fullName.split(" ");
     setFormData({
       firstName: lead.firstName || names[0] || "",
@@ -205,7 +224,7 @@ export default function LeadApplicantProfileModal({
 
   // Quick Status Change directly from dropdown
   const handleQuickStatusChange = (newStatus: ApplicantLead["status"]) => {
-    if (newStatus === lead.status) return;
+    if (!lead || newStatus === lead.status) return;
 
     const currentDate = new Date().toISOString().split("T")[0];
     const currentTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -354,6 +373,8 @@ export default function LeadApplicantProfileModal({
         return "bg-slate-100 border-slate-200";
     }
   };
+
+  if (!isOpen || !lead) return null;
 
   return (
     <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-5 select-none overflow-y-auto" id="lead-profile-modal-overlay">

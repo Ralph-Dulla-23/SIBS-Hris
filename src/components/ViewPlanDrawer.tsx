@@ -40,8 +40,6 @@ export default function ViewPlanDrawer({
   onClose,
   onUpdatePlan
 }: ViewPlanDrawerProps) {
-  if (!isOpen || !plan) return null;
-
   // Local state for Sourcing actions
   const [actionQuery, setActionQuery] = useState("");
   const [actionStatusFilter, setActionStatusFilter] = useState<string>("All");
@@ -78,7 +76,7 @@ export default function ViewPlanDrawer({
 
   // Filters & Sorters on Action Items
   const filteredActionItems = useMemo(() => {
-    let items = [...plan.actionItems];
+    let items = plan?.actionItems ? [...plan.actionItems] : [];
 
     // Status filter
     if (actionStatusFilter !== "All") {
@@ -109,16 +107,17 @@ export default function ViewPlanDrawer({
     });
 
     return items;
-  }, [plan.actionItems, actionStatusFilter, actionOverdueFilter, actionQuery, actionSortOrder]);
+  }, [plan?.actionItems, actionStatusFilter, actionOverdueFilter, actionQuery, actionSortOrder]);
 
   // Aggregate stats for action items
   const taskStats = useMemo(() => {
-    const total = plan.actionItems.length;
-    const completed = plan.actionItems.filter(i => i.status === ActionItemStatus.Completed).length;
-    const inProgress = plan.actionItems.filter(i => i.status === ActionItemStatus.InProgress).length;
-    const overdue = plan.actionItems.filter(i => isOverdue(i.targetDate) && i.status !== ActionItemStatus.Completed).length;
+    const actionItems = plan?.actionItems || [];
+    const total = actionItems.length;
+    const completed = actionItems.filter(i => i.status === ActionItemStatus.Completed).length;
+    const inProgress = actionItems.filter(i => i.status === ActionItemStatus.InProgress).length;
+    const overdue = actionItems.filter(i => isOverdue(i.targetDate) && i.status !== ActionItemStatus.Completed).length;
     return { total, completed, inProgress, overdue };
-  }, [plan.actionItems]);
+  }, [plan?.actionItems]);
 
   // CRUD Operation: Add Action Item
   const handleAddTask = (e: React.FormEvent) => {
@@ -260,6 +259,8 @@ export default function ViewPlanDrawer({
     onUpdatePlan(updatedPlan);
     showToast(`Task status adjusted to ${newStatus}.`);
   };
+
+  if (!isOpen || !plan) return null;
 
   return (
     <div className="fixed inset-0 z-40 flex justify-end select-none">

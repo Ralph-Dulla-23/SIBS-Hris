@@ -100,7 +100,6 @@ export default function Sidebar({ currentModule, onModuleChange, activeTab, onTa
         { name: "Onboarding", icon: UserCheck, isEnabled: true, moduleKey: "Onboarding" },
         { name: "Action Items", icon: CheckSquare, isEnabled: true, moduleKey: "Action Items" },
         { name: "Weekly Reports", icon: PieChart, isEnabled: true, moduleKey: "Weekly Reports" },
-        { name: "Architecture Flowcharts", icon: GitFork, isEnabled: true, moduleKey: "Recruitment Flowchart", badge: "5 Flows" },
         { name: "Candidate Experience", icon: Sparkles, isEnabled: false },
       ]
     },

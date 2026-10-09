@@ -39,8 +39,6 @@ export default function SourceDetailsModal({
   onUpdateSource,
   onTriggerToast
 }: SourceDetailsModalProps) {
-  if (!source) return null;
-
   // --- LOCAL EDIT / ADD EXPENSE STATE ---
   const [editingExpense, setEditingExpense] = useState<SourceCostEntry | null>(null);
   const [isAddingExpense, setIsAddingExpense] = useState(false);
@@ -152,21 +150,21 @@ export default function SourceDetailsModal({
 
   // Live Calculations for Header and Cards
   const totalCost = useMemo(() => {
-    return source.costEntries.reduce((sum, entry) => sum + entry.amount, 0);
-  }, [source.costEntries]);
+    return (source?.costEntries || []).reduce((sum, entry) => sum + entry.amount, 0);
+  }, [source?.costEntries]);
 
   const conversionRate = useMemo(() => {
-    if (!source.applicants || source.applicants === 0) return "0.0";
-    return ((source.hired / source.applicants) * 100).toFixed(1);
-  }, [source.applicants, source.hired]);
+    if (!source?.applicants || source.applicants === 0) return "0.0";
+    return (((source.hired || 0) / source.applicants) * 100).toFixed(1);
+  }, [source?.applicants, source?.hired]);
 
   const costPerHire = useMemo(() => {
-    if (!source.hired || source.hired === 0) return null;
+    if (!source?.hired || source.hired === 0) return null;
     return Math.round(totalCost / source.hired);
-  }, [totalCost, source.hired]);
+  }, [totalCost, source?.hired]);
 
   // Stage conversion rates for funnel
-  const funnelStages = [
+  const funnelStages = source ? [
     {
       label: "Candidate Volume",
       subLabel: "All public applicants",
@@ -212,7 +210,9 @@ export default function SourceDetailsModal({
       textColor: "text-emerald-700",
       badgeBg: "bg-emerald-50 text-emerald-700 border border-emerald-200"
     }
-  ];
+  ] : [];
+
+  if (!source) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-[#042C51]/80 backdrop-blur-sm overflow-y-auto">

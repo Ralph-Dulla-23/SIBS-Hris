@@ -86,6 +86,16 @@ export default function App() {
   // View Plan Drawer state
   const [selectedPlan, setSelectedPlan] = useState<WorkforcePlan | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [previousModule, setPreviousModule] = useState<string>("Workforce Hiring");
+
+  const handleOpenFlowchart = () => {
+    setPreviousModule(currentModule !== "Recruitment Flowchart" ? currentModule : "Workforce Hiring");
+    setCurrentModule("Recruitment Flowchart");
+  };
+
+  const handleCloseFlowchart = () => {
+    setCurrentModule(previousModule === "Recruitment Flowchart" ? "Workforce Hiring" : previousModule);
+  };
 
   // Handle schedule mutations
   const handleSaveSchedule = (updatedSchedule: ScheduleItem) => {
@@ -343,25 +353,37 @@ export default function App() {
     };
   }, [clusterFilter, detailRecords]);
 
+  const isFlowchartPage = currentModule === "Recruitment Flowchart";
+
   return (
     <div className="min-h-screen bg-[#DDE4EC] flex text-[#101828] max-w-full overflow-x-hidden">
       
-      {/* Dynamic Sidebar */}
-      <Sidebar 
-        currentModule={currentModule} 
-        onModuleChange={setCurrentModule} 
-        activeTab={activeTab}
-        onTabChange={setActiveTab}
-      />
-
-      {/* Main Panel Content (Shifted left to accommodate fixed Sidebar) */}
-      <div className="flex-1 pl-64 flex flex-col min-h-screen pb-10 min-w-0 max-w-full overflow-x-hidden">
-        
-        {/* Unchanging top header */}
-        <Header 
-          userEmail="alena.batacan@thesiblingssolutions.com" 
-          onOpenCalendar={() => setIsCalendarOpen(true)}
+      {/* Dynamic Sidebar - completely removed on flowchart page */}
+      {!isFlowchartPage && (
+        <Sidebar 
+          currentModule={currentModule} 
+          onModuleChange={(mod) => {
+            if (mod === "Recruitment Flowchart") {
+              handleOpenFlowchart();
+            } else {
+              setCurrentModule(mod);
+            }
+          }} 
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
         />
+      )}
+
+      {/* Main Panel Content (Shifted left to accommodate fixed Sidebar when visible) */}
+      <div className={`flex-1 ${isFlowchartPage ? "pl-0" : "pl-64"} flex flex-col min-h-screen ${isFlowchartPage ? "pb-0" : "pb-10"} min-w-0 max-w-full overflow-x-hidden`}>
+        
+        {/* Unchanging top header - completely removed on flowchart page */}
+        {!isFlowchartPage && (
+          <Header 
+            userEmail="alena.batacan@thesiblingssolutions.com" 
+            onOpenCalendar={() => setIsCalendarOpen(true)}
+          />
+        )}
 
         {currentModule === "Employee Directory" ? (
           <div className={`mt-20 px-6 flex-1 flex flex-col ${
@@ -474,10 +496,10 @@ export default function App() {
             <EmailLogs userEmail="alena.batacan@thesiblingssolutions.com" onSwitchModule={setCurrentModule} />
           </div>
         ) : currentModule === "Recruitment Flowchart" ? (
-          <div className="mt-16 flex-1 flex flex-col w-full">
+          <div className="flex-1 flex flex-col w-full min-h-screen">
             <RecruitmentFlowchart 
               onSwitchModule={setCurrentModule} 
-              onClose={() => setCurrentModule("Workforce Hiring")}
+              onClose={handleCloseFlowchart}
             />
           </div>
         ) : (
@@ -496,9 +518,9 @@ export default function App() {
 
           <div className="flex flex-wrap items-center gap-1.5 text-[11px] font-extrabold text-slate-300">
             <button 
-              onClick={() => setCurrentModule("Recruitment Flowchart")}
+              onClick={handleOpenFlowchart}
               className="px-2.5 py-1 rounded-lg bg-[#FF5C28] text-white hover:bg-[#e04b1c] transition-all font-black text-[10px] shadow-sm flex items-center gap-1 cursor-pointer"
-              title="Open Recruitment Flowchart"
+              title="Open Interactive Process & Architecture Flowcharts"
             >
               <Sparkles className="w-3 h-3" />
               <span>Flowchart Process Map</span>

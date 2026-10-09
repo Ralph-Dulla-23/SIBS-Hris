@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import * as XLSX from "xlsx";
 import {
   UserPlus,
@@ -73,9 +73,43 @@ export default function ApplicantLeads({ userEmail, onSwitchModule }: ApplicantL
   // --- STATE ---
   const [activeTab, setActiveTab] = useState<"active" | "archive" | "sources">("active");
 
-  // Leads Lists
-  const [leads, setLeads] = useState<ApplicantLead[]>(INITIAL_ACTIVE_LEADS);
-  const [archivedLeads, setArchivedLeads] = useState<ArchivedTalentPoolLead[]>(INITIAL_ARCHIVED_LEADS);
+  // Leads Lists with LocalStorage Persistence
+  const [leads, setLeads] = useState<ApplicantLead[]>(() => {
+    try {
+      const saved = localStorage.getItem("sibs_applicant_leads");
+      if (saved) return JSON.parse(saved);
+    } catch (e) {
+      console.warn("Could not read leads from localStorage", e);
+    }
+    return INITIAL_ACTIVE_LEADS;
+  });
+
+  const [archivedLeads, setArchivedLeads] = useState<ArchivedTalentPoolLead[]>(() => {
+    try {
+      const saved = localStorage.getItem("sibs_archived_leads");
+      if (saved) return JSON.parse(saved);
+    } catch (e) {
+      console.warn("Could not read archived leads from localStorage", e);
+    }
+    return INITIAL_ARCHIVED_LEADS;
+  });
+
+  // Sync leads changes to localStorage
+  useEffect(() => {
+    try {
+      localStorage.setItem("sibs_applicant_leads", JSON.stringify(leads));
+    } catch (e) {
+      console.warn("Error saving leads to localStorage", e);
+    }
+  }, [leads]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem("sibs_archived_leads", JSON.stringify(archivedLeads));
+    } catch (e) {
+      console.warn("Error saving archived leads to localStorage", e);
+    }
+  }, [archivedLeads]);
 
   // Lead Profile Panel Modal State
   const [selectedLeadForProfile, setSelectedLeadForProfile] = useState<ApplicantLead | null>(null);
